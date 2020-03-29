@@ -5,33 +5,37 @@ const {EasingFunctions} = require('../easing');
 
 let Kaph = function () {
 
-    let blue = "rgba(0,0,255, 0.5)";
-    let red = "rgba(255,0,0, 0.5)";
-    let grey = "rgba(128,128,128, 1)";
+    let canvas = null, ctx = null; // filled by init
 
+    const blue = "rgba(0,0,255, 0.5)";
+    const red = "rgba(255,0,0, 0.5)";
+    const grey = "rgba(128,128,128, 1)";
+    const capType = 'round';
 
-    let radius;
-    let lineWidth = 1;
-    //let minLineLength = 10;
-    let minLineLength = 1;
-    let c;
-    let capType = 'round';
-    let power = 0.5;
-    let alpha = 0.5;
-    let canvas = null;
+    let radius; // radius of the circle
+    let alpha = 0.5; // the alpha value of all line colors drawn
+
+    // numbers that will be scaled
+    let lineWidth = 1.5; // radius of all lines drawn
+    let minLineLength = 1; // min length of an individual prime line
+    let fontSize = 18; // pixels
 
     let Init = function (a_canvas) {
-        canvas = a_canvas;
 
+        canvas = a_canvas;
+        ctx = canvas.getContext('2d');
+
+        // find scale
         const height = canvas.height;
         const scale = height / 1080; // base on 1080
 
-        lineWidth = 1.5 * scale;
-        minLineLength = 1 * scale;
+        // apply scale
+        lineWidth *= scale;
+        minLineLength *= scale;
+        fontSize *= scale;
+        ctx.font = `${Math.floor(fontSize)}px Consolas`;
 
-        c = canvas.getContext('2d');
         CalculateRadius();
-        //Timer.AddEvent(Draw);
     };
 
     let CalculateRadius = function () {
@@ -48,38 +52,25 @@ let Kaph = function () {
         DrawPrimesInverted();
         DrawSpeed();
         DrawNumber();
-        DrawAcceleration();
-    };
-
-    let DrawAcceleration = function () {
-        c.save();
-        //c.translate(canvas.width / 2, canvas.height / 2);
-        c.font = '18px Arial';
-        c.fillStyle = 'grey';
-        c.fillText(('' + Prime.Acceleration()).substring(0, 6), 20, 30);
-        //c.restore();
     };
 
     let DrawSpeed = function () {
-        c.save();
-        //c.translate(canvas.width / 2, canvas.height / 2);
-        c.font = '18px Arial';
-        c.fillStyle = 'grey';
-        c.fillText(('' + Prime.GetCountPerSecond()).substring(0, 4), 20, 50);
-        //c.restore();
+        const value = Math.floor(Prime.GetCountPerSecond() * 10) / 10;
+        ctx.save();
+        ctx.fillStyle = 'grey';
+        ctx.fillText(`V: ${value}/s`, (fontSize*0.7), (fontSize * 1.5)*2);
     };
 
     let DrawNumber = function () {
-        c.save();
-        //c.translate(canvas.width / 2, canvas.height / 2);
-        c.font = '18px Arial';
-        c.fillStyle = 'grey';
-        c.fillText(('' + Prime.GetLastWholeNumber()).substring(0, 7), 20, 70);
-        //c.restore();
+
+        let value = Math.floor(Prime.GetCurrentNumber() * 100) / 100;
+        ctx.save();
+        ctx.fillStyle = 'grey';
+        ctx.fillText(`N: ${value}`, (fontSize*0.7), (fontSize * 1.5));
     };
 
     let DrawOne = function () {
-        let maxNumber = Prime.Current.length === 0 ? 1 : Prime.Current[Prime.Current.length-1];
+        //let maxNumber = Prime.Current.length === 0 ? 1 : Prime.Current[Prime.Current.length-1];
 
         let count = Prime.GetCurrentNumber();
         //DrawPrime(1, 1, grey, maxNumber);
@@ -102,9 +93,9 @@ let Kaph = function () {
 
     let DrawPrimesInverted = function () {
         let number = Prime.GetCurrentNumber();
-        let maxNumber = Prime.Current[Prime.Current.length-1];
+        //let maxNumber = Prime.Current[Prime.Current.length-1];
         for (let i = 0; i <=  Prime.Current.length; i++) {
-            DrawPrime(Prime.Current[i], number, null, maxNumber);
+            DrawPrime(Prime.Current[i], number, null);
         }
     };
 
@@ -112,7 +103,7 @@ let Kaph = function () {
         return Math.pow(percent, pow);
     };
 
-    let DrawPrime = function (number, count, color, maxNumber) {
+    let DrawPrime = function (number, count, color) {
         let initialAngle = Math.PI * 1.5;
         let percent = (count % number) / number;
         let angle = initialAngle + Math.PI * 2.0 * percent;
@@ -131,10 +122,10 @@ let Kaph = function () {
         lengthPercent = lengthPercent >= 1 ? 1 : lengthPercent;
 
         // ease the percent
-        let easePercent = Math.min(1, maxNumber / 1000);
+        let easePercent = Math.min(1, count / 1000);
         //let easePower = Math.max(1, 10 * easePercent);
 
-        let easePower = Math.log(maxNumber) * 0.5;
+        let easePower = Math.log(count) * 0.5;
         lengthPercent = ease(lengthPercent, easePower);
 
 
@@ -162,16 +153,16 @@ let Kaph = function () {
         let y2 = Math.sin(angle) * (radius - length);
 
         // Draw
-        c.save();
-        c.translate(canvas.width / 2, canvas.height / 2);
-        c.beginPath();
-        c.moveTo(x1, y1);
-        c.lineTo(x2, y2);
-        c.lineWidth = lineWidth;
-        c.strokeStyle = color;
-        c.lineCap = capType;
-        c.stroke();
-        c.restore();
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineWidth = lineWidth;
+        ctx.strokeStyle = color;
+        ctx.lineCap = capType;
+        ctx.stroke();
+        ctx.restore();
     };
 
     let DrawCircle = function () {
@@ -179,27 +170,25 @@ let Kaph = function () {
         let x = 0;
         let y = 0;
 
-        c.save();
+        ctx.save();
 
-        c.translate(canvas.width / 2, canvas.height / 2);
+        ctx.translate(canvas.width / 2, canvas.height / 2);
 
-        c.beginPath();
-        c.arc(x, y, radius, 0, Math.PI * 2, false);
-        c.closePath();
-        c.lineWidth = 3;
-        c.strokeStyle = grey;
-        c.lineCap = capType;
-        c.stroke();
+        ctx.beginPath();
+        ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+        ctx.closePath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = grey;
+        ctx.lineCap = capType;
+        ctx.stroke();
 
-        c.restore();
+        ctx.restore();
     };
 
     return {
         Init,
         Draw,
-        CalculateRadius,
-        Lower: function(){power -= 0.1;},
-        Raise: function () { power += 0.1; }
+        CalculateRadius
     };
 
 } ();

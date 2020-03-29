@@ -8,26 +8,31 @@ const FPS30 = 30;
 
 (async () => {
 
-    let skipMinutes = 60;
+    let skipMinutes = 1;
     //skipMinutes = 0;
 
-    // await execute({
-    //     path: `C:/git/spiral/frames/0003`,
-    //     //width: 3840*2, height: 2160*2,
-    //     width: 1080*8, height: 1080*8,
-    //     fps: 0.01,
-    //     startTime: 1000*60 * skipMinutes,
-    //     runTimeSeconds: 60*60*100 // 2 min
-    // });
+    let rootPath = `${__dirname}/frames`;
 
     await execute({
-        path: `C:/git/spiral/frames/0000`,
-        width: 3840,
-        height: 2160,
-        fps: FPS60,
-        startTime: 1000*6,
-        runTimeSeconds: 60*5 // 1 min
+        path: `${rootPath}/0003`,
+        width: 1080*2, height: 1080*2,
+
+        fps: 1,
+        startTime: 1000*60 * skipMinutes,
+
+        // only one frame
+        isSingleFrame: true,
+        runTimeSeconds: 1
     });
+
+    // await execute({
+    //     path: `${rootPath}/0000`,
+    //     width: 3840,
+    //     height: 2160,
+    //     fps: FPS60,
+    //     startTime: 1000*6,
+    //     runTimeSeconds: 60*5 // 1 min
+    // });
 
 })();
 
@@ -35,7 +40,7 @@ async function sleep(time) {
     await new Promise((resolve, reject) => { setTimeout(resolve, time); });
 }
 
-async function execute({path, width, height, startTime, runTimeSeconds, fps}) {
+async function execute({path, width, height, startTime, runTimeSeconds, fps, isSingleFrame = false}) {
 
     // set initial time
     Prime.AddTime(startTime);
@@ -70,7 +75,7 @@ async function execute({path, width, height, startTime, runTimeSeconds, fps}) {
         frame += 1;
 
         // only one frame
-        //frame = totalFrames;
+        if (isSingleFrame) break;
     }
 
 }
