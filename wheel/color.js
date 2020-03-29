@@ -1,40 +1,40 @@
 
-var Color = function () {
+let Color = function () {
 
-    var TrimPercent = function (percent) {
+    let TrimPercent = function (percent) {
         while (percent > 1.0) { percent -= 1.0; }
         return percent;
-    }
+    };
 
-    var percentCache = {};
+    let percentCache = {};
 
-    var ByPercent = function (percent, full, alpha = 0.5) {
+    let ByPercent = function (percent, full, alpha = 0.5) {
 
         // trim it
         percent = TrimPercent(percent);
 
         // narrow down to just a handful of possible values
-        var key = "K" + Math.floor(percent * 1000);
+        let key = "K" + Math.floor(percent * 1000);
 
         // Try to pull from cache
         if (typeof percentCache[key] !== 'undefined') {
             return percentCache[key];
         }
 
-        var max = 6;
-        var total = full * max; // Max num of colors that can be generated
+        let max = 6;
+        let total = full * max; // Max num of colors that can be generated
 
         // The number representing the color that will be returned
-        var i = Math.round(total * percent);
+        let i = Math.round(total * percent);
 
-        //var full = 170;
-        var empty = 0;
-        var between = 0; //parseInt(parseFloat(full) * percent);
+        //let full = 170;
+        let empty = 0;
+        let between = 0; //parseInt(parseFloat(full) * percent);
 
-        var r = empty;
-        var g = empty;
-        var b = empty;
-        var a = alpha; // 0.5; // No alpha
+        let r = empty;
+        let g = empty;
+        let b = empty;
+        let a = alpha; // 0.5; // No alpha
 
         if (percent < 1.0 / max) {
             // #FF++00 = FF0000 -> FFFF00
@@ -80,16 +80,17 @@ var Color = function () {
         percentCache[key] = color;
 
         return color;
-
     };
 
-    var ByNumber = function (number, max, alpha = 0.5) {
+    let ByNumber = function (number, max, alpha = 0.5) {
         while (number > max) { number -= max; }
         return ByPercent(number / max, 170, alpha);
     };
 
     return {
-        ByNumber: ByNumber
+        ByNumber: ByNumber,
+
+
     };
 
 } ();
