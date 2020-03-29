@@ -7,8 +7,6 @@ let Kaph = function () {
 
     let canvas = null, ctx = null; // filled by init
 
-    const blue = "rgba(0,0,255, 0.5)";
-    const red = "rgba(255,0,0, 0.5)";
     const grey = "rgba(128,128,128, 1)";
     const capType = 'round';
 
@@ -19,6 +17,7 @@ let Kaph = function () {
     let lineWidth = 1.5; // radius of all lines drawn
     let minLineLength = 1; // min length of an individual prime line
     let fontSize = 18; // pixels
+    const font = 'Consolas';
 
     let Init = function (a_canvas) {
 
@@ -33,7 +32,7 @@ let Kaph = function () {
         lineWidth *= scale;
         minLineLength *= scale;
         fontSize *= scale;
-        ctx.font = `${Math.floor(fontSize)}px Consolas`;
+        ctx.font = `${Math.floor(fontSize)}px ${font}`;
 
         CalculateRadius();
     };
@@ -44,44 +43,60 @@ let Kaph = function () {
         radius = (size * 0.95) / 2;
     };
 
-    let Draw = function (time, totalTime) {
 
+    let Draw = function () {
+        // static things:
         DrawCircle();
-        DrawOne();
-        //DrawPrimes();
-        DrawPrimesInverted();
+        drawMark();
+
+        // stats
         DrawSpeed();
         DrawNumber();
+
+        // draw moving things
+        DrawPointer();
+        //DrawPrimes();
+        DrawPrimesInverted();
     };
 
-    let DrawSpeed = function () {
-        const value = Math.floor(Prime.GetCountPerSecond() * 10) / 10;
-        ctx.save();
-        ctx.fillStyle = 'grey';
-        ctx.fillText(`V: ${value}/s`, (fontSize*0.7), (fontSize * 1.5)*2);
-    };
-
+    // draws the current number in the corner
     let DrawNumber = function () {
-
         let value = Math.floor(Prime.GetCurrentNumber() * 100) / 100;
         ctx.save();
-        ctx.fillStyle = 'grey';
+        ctx.fillStyle = grey;
         ctx.fillText(`N: ${value}`, (fontSize*0.7), (fontSize * 1.5));
     };
 
-    let DrawOne = function () {
-        //let maxNumber = Prime.Current.length === 0 ? 1 : Prime.Current[Prime.Current.length-1];
+    // draws the current velocity stat in the corner
+    let DrawSpeed = function () {
+        const value = Math.floor(Prime.GetCountPerSecond() * 10) / 10;
+        ctx.save();
+        ctx.fillStyle = grey;
+        ctx.fillText(`V: ${value}/s`, (fontSize*0.7), (fontSize * 1.5)*2);
+    };
+
+    // draws the mark indicating the number 1
+    let drawMark = function() {
+        DrawLine(Math.PI * 1.5, 1, grey);
+    };
+
+    let DrawPointer = function () {
+
+        // dont draw if we are over 100
+        let velocity = Prime.GetCountPerSecond();
+        if (velocity > 3) return;
+
+        // determine alpha of pointer by velocity
+        let alpha = 1 - (velocity / 3);
 
         let count = Prime.GetCurrentNumber();
-        //DrawPrime(1, 1, grey, maxNumber);
-
-        DrawLine(Math.PI * 1.5, 1, grey);
-
         let initialAngle = Math.PI * 1.5;
-        let percent = (count % 1) / 1;
+        let percent = count % 1;
         let angle = initialAngle + Math.PI * 2.0 * percent;
-        DrawLine(angle, 1, 'white');
-        //DrawPrime(1, number, 'white', maxNumber);
+
+        let color = `rgba(255,255,255, ${alpha})`;
+
+        DrawLine(angle, 1, color);
     };
 
     let DrawPrimes = function () {
@@ -166,7 +181,6 @@ let Kaph = function () {
     };
 
     let DrawCircle = function () {
-
         let x = 0;
         let y = 0;
 

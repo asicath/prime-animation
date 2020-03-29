@@ -8,7 +8,7 @@ const FPS30 = 30;
 
 (async () => {
 
-    let skipMinutes = 1;
+    let skipMinutes = 0.7;
     //skipMinutes = 0;
 
     let rootPath = `${__dirname}/frames`;
