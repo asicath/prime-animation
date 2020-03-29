@@ -1,0 +1,7 @@
+node_modules
+.idea
+*.png
+*.jpg
+*.avi
+*.mp4
+ffmpeg.exe
