@@ -1,0 +1,1 @@
+ffmpeg.exe -f image2 -framerate 60 -pattern_type sequence -start_number 0 -r 60 -i ./0000/%%10d.png -s 3840x2160 -c:v libx264 -preset slow -crf 22 -c:a copy test-0000-crf22.avi
