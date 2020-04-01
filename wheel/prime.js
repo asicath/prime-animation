@@ -83,11 +83,18 @@ const Prime = function () {
     };
 
     let IsPrime = function (n) {
+
+        // less than 1 is always prime
         if (n <= 1) { return false; }
+
+        // don't check anything above sqrt of n
+        const max = Math.floor(Math.sqrt(n));
+
         for (let i = 0; i < primes.length; i++) {
-            if (n % primes[i] == 0) {
+            if (n % primes[i] === 0) {
                 return false;
             }
+            if (primes[i] > max) return true;
         }
         return true;
     };
