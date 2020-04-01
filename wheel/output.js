@@ -8,21 +8,34 @@ const FPS30 = 30;
 
 (async () => {
 
-    let skipMinutes = 0.7;
+    let skipMinutes = 60;
     //skipMinutes = 0;
 
     let rootPath = `${__dirname}/frames`;
 
-    await execute({
-        path: `${rootPath}/0003`,
-        width: 1080*2, height: 1080*2,
+    // await execute({
+    //     path: `${rootPath}/0003`,
+    //     width: 1080*4, height: 1080*4,
+    //
+    //     fps: 1,
+    //     startTime: 1000*60 * skipMinutes,
+    //
+    //     // only one frame
+    //     isSingleFrame: true,
+    //     runTimeSeconds: 1
+    // });
 
-        fps: 1,
-        startTime: 1000*60 * skipMinutes,
+
+    await execute({
+        path: `${rootPath}/demo`,
+        width: 1080*4, height: 1080*4,
+
+        fps: 1/(60*5), // a frame every minute
+        startTime: 0,
 
         // only one frame
-        isSingleFrame: true,
-        runTimeSeconds: 1
+        //isSingleFrame: true,
+        runTimeSeconds: 60*60*4
     });
 
     // await execute({
