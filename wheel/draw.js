@@ -64,7 +64,7 @@ let Kaph = function () {
         let value = Math.floor(Prime.GetCurrentNumber() * 100) / 100;
         ctx.save();
         ctx.fillStyle = grey;
-        ctx.fillText(`N: ${value}`, (fontSize*0.7), (fontSize * 1.5));
+        ctx.fillText(`N: ${value}`, (fontSize*0.7), (fontSize * 1.5)*2);
     };
 
     // draws the current velocity stat in the corner
@@ -72,7 +72,25 @@ let Kaph = function () {
         const value = Math.floor(Prime.GetCountPerSecond() * 10) / 10;
         ctx.save();
         ctx.fillStyle = grey;
-        ctx.fillText(`V: ${value}/s`, (fontSize*0.7), (fontSize * 1.5)*2);
+        ctx.fillText(`V: ${value}/s`, (fontSize*0.7), (fontSize * 1.5)*3);
+    };
+
+    // draws the current velocity stat in the corner
+    let DrawTime = function () {
+        let time = Prime.GetTime();
+        let hh = Math.floor(time / (1000*60*60));
+        time -= hh * (1000*60*60);
+        let mm = Math.floor(time / (1000*60));
+        time -= mm * (1000*60);
+        let ss = Math.floor(time / (1000));
+
+        hh = hh < 10 ? "0" + hh.toString() : hh.toString();
+        mm = mm < 10 ? "0" + mm.toString() : mm.toString();
+        ss = ss < 10 ? "0" + ss.toString() : ss.toString();
+
+        ctx.save();
+        ctx.fillStyle = grey;
+        ctx.fillText(`${hh}:${mm}:${ss}`, (fontSize*0.7), (fontSize * 1.5)*1);
     };
 
     // draws the mark indicating the number 1
