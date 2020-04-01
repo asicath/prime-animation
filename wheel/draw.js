@@ -12,7 +12,8 @@ let Kaph = function () {
     const capType = 'round';
 
     let radius; // radius of the circle
-    let alphaBase = 0.2; // the alpha value of all line colors drawn
+    let alphaBase = 0.5; // the alpha value of all line colors drawn
+    let colorsPerRainbow = 1000;
 
     // numbers that will be scaled
     let lineWidth, minLineLength, fontSize;
@@ -27,8 +28,8 @@ let Kaph = function () {
         canvas = a_canvas;
         ctx = canvas.getContext('2d');
 
-        drawMethod = DrawWedge;
-        //drawMethod = DrawLine;
+        //drawMethod = DrawWedge;
+        drawMethod = DrawLine;
 
         // find scale
         const height = canvas.height;
@@ -150,7 +151,6 @@ let Kaph = function () {
         let angle = initialAngle + Math.PI * 2.0 * percent;
 
         //let lengthPercent = Math.log(n);
-
         //let lengthPercent = n / count; // normal
 
         let lengthPercentBase = 1 - (n / count); // invert
@@ -163,24 +163,23 @@ let Kaph = function () {
         const lengthPercent = ease(lengthPercentBase, easePower);
 
         // vary the alpha value as well
-        const alphaValue = alphaBase; // * lengthPercentBase;
+        let alphaValue = alphaBase;
+        alphaValue *= ease(lengthPercentBase, easePower);
 
-        if (color == null) { color = Color.ByNumber(n, 1000, alphaValue); }
+        if (color == null) { color = Color.ByNumber(n, colorsPerRainbow, alphaValue); }
         drawMethod(angle, lengthPercent, color, count);
     };
 
     let DrawWedge = function (angle, lengthPercent, color, count) {
 
-        let aPerUnit = (Math.PI * 2) / 1000; // use count instead
+        let aPerUnit = (Math.PI * 2) / 2000; // use count instead
 
         let a0 = (angle - aPerUnit / 2) % (Math.PI * 2);
         let a1 = (angle + aPerUnit / 2) % (Math.PI * 2);
 
-
         // Outside point (On circle)
         let x1 = Math.cos(a0) * radius;
         let y1 = Math.sin(a0) * radius;
-
 
         // The length of the line
         let length = lengthPercent * radius;

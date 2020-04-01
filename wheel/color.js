@@ -14,12 +14,12 @@ let Color = function () {
         percent = TrimPercent(percent);
 
         // narrow down to just a handful of possible values
-        let key = "K" + Math.floor(percent * 1000);
+        //let key = `K${Math.floor(percent * 100000)}-${Math.floor(alpha * 10000)}`;
 
         // Try to pull from cache
-        if (typeof percentCache[key] !== 'undefined') {
-            return percentCache[key];
-        }
+        //if (typeof percentCache[key] !== 'undefined') {
+        //    return percentCache[key];
+        //}
 
         let max = 6;
         let total = full * max; // Max num of colors that can be generated
@@ -75,22 +75,20 @@ let Color = function () {
         }
 
         // create the color
-        color = 'rgba(' + r + ',' + g + ',' + b + ', ' + a + ')';
+        color = `rgba(${r},${b},${g},${a})`;
 
-        percentCache[key] = color;
+        //percentCache[key] = color;
 
         return color;
     };
 
-    let ByNumber = function (number, max, alpha = 0.5) {
+    let ByNumber = function (number, max, alpha) {
         while (number > max) { number -= max; }
         return ByPercent(number / max, 170, alpha);
     };
 
     return {
         ByNumber: ByNumber,
-
-
     };
 
 } ();

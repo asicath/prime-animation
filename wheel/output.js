@@ -26,17 +26,41 @@ const FPS30 = 30;
     // });
 
 
-    await execute({
-        path: `${rootPath}/demo`,
-        width: 1080*4, height: 1080*4,
+    // await execute({
+    //     path: `${rootPath}/demo`,
+    //     width: 1080*4, height: 1080*4,
+    //
+    //     fps: 1/(60*5), // a frame every minute
+    //     startTime: 1000*60*60*2,
+    //
+    //     // only one frame
+    //     //isSingleFrame: true,
+    //     runTimeSeconds: 60*60*4
+    // });
 
-        fps: 1/(60*5), // a frame every minute
-        startTime: 0,
+    await execute({
+        path: `${rootPath}/demo2`,
+        width: 1920*2, height: 1080*2,
+
+        fps: 60,
+        startTime: 1000*60*60*2,
 
         // only one frame
         //isSingleFrame: true,
-        runTimeSeconds: 60*60*4
+        runTimeSeconds: 60*5
     });
+
+    // await execute({
+    //     path: `${rootPath}/bug`,
+    //     width: 1080, height: 1080,
+    //
+    //     fps: 1,
+    //     startTime: 1000*60*2,
+    //
+    //     // only one frame
+    //     //isSingleFrame: true,
+    //     runTimeSeconds: 60*60*4
+    // });
 
     // await execute({
     //     path: `${rootPath}/0000`,
