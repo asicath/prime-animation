@@ -109,7 +109,7 @@ let Kaph = function () {
     let DrawPrimesInverted = function () {
         let number = Prime.GetCurrentNumber();
         //let maxNumber = Prime.Current[Prime.Current.length-1];
-        for (let i = 0; i <=  Prime.Current.length; i++) {
+        for (let i = 0; i < Prime.Current.length; i++) {
             DrawPrime(Prime.Current[i], number, null);
         }
     };
