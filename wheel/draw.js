@@ -143,7 +143,49 @@ let Kaph = function () {
         let easePower = Math.log(count) * 0.5;
         lengthPercent = ease(lengthPercent, easePower);
 
+        if (color == null) { color = Color.ByNumber(n, 1000, alpha); }
+        drawMethod(angle, lengthPercent, color, count);
+    };
 
+    let DrawWedge = function (angle, lengthPercent, color, count) {
+
+        let aPerUnit = (Math.PI * 2) / 1000; // use count instead
+
+        let a0 = (angle - aPerUnit / 2) % (Math.PI * 2);
+        let a1 = (angle + aPerUnit / 2) % (Math.PI * 2);
+
+
+        // Outside point (On circle)
+        let x1 = Math.cos(a0) * radius;
+        let y1 = Math.sin(a0) * radius;
+
+
+        // The length of the line
+        let length = lengthPercent * radius;
+
+        // Ensure min length
+        if (length < minLineLength) {
+            length = minLineLength;
+        }
+
+        // The point inside the circle
+        let x0 = Math.cos(a0) * (radius - length);
+        let y0 = Math.sin(a0) * (radius - length);
+        let x3 = Math.cos(a1) * (radius - length);
+        let y3 = Math.sin(a1) * (radius - length);
+
+        // Draw
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x0, y0); // inside 1
+        ctx.lineTo(x1, y1); // outside 1
+        ctx.arc(0, 0, radius, a0, a1, false); // outside 2
+        ctx.lineTo(x3, y3);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
 
         if (color == null) { color = Color.ByNumber(number, 1000, alpha); }
         DrawLine(angle, lengthPercent, color);
