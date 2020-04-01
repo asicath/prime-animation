@@ -6,17 +6,20 @@ const {EasingFunctions} = require('../easing');
 let Kaph = function () {
 
     let canvas = null, ctx = null; // filled by init
+    let drawMethod = null;
 
     const grey = "rgba(128,128,128, 1)";
     const capType = 'round';
 
     let radius; // radius of the circle
-    let alpha = 0.5; // the alpha value of all line colors drawn
+    let alpha = 0.05; // the alpha value of all line colors drawn
 
     // numbers that will be scaled
-    let lineWidth = 1.5; // radius of all lines drawn
-    let minLineLength = 1; // min length of an individual prime line
-    let fontSize = 18; // pixels
+    let lineWidth, minLineLength, fontSize;
+
+    let lineWidthInitial = 1.5; // radius of all lines drawn
+    let minLineLengthInitial = 1; // min length of an individual prime line
+    let fontSizeInitial = 18; // pixels
     const font = 'Consolas';
 
     let Init = function (a_canvas) {
@@ -24,14 +27,17 @@ let Kaph = function () {
         canvas = a_canvas;
         ctx = canvas.getContext('2d');
 
+        drawMethod = DrawWedge;
+        //drawMethod = DrawLine;
+
         // find scale
         const height = canvas.height;
         const scale = height / 1080; // base on 1080
 
         // apply scale
-        lineWidth *= scale;
-        minLineLength *= scale;
-        fontSize *= scale;
+        lineWidth = lineWidthInitial * scale;
+        minLineLength = minLineLengthInitial * scale;
+        fontSize = fontSizeInitial * scale;
         ctx.font = `${Math.floor(fontSize)}px ${font}`;
 
         CalculateRadius();
@@ -52,6 +58,7 @@ let Kaph = function () {
         // stats
         DrawSpeed();
         DrawNumber();
+        DrawTime();
 
         // draw moving things
         DrawPointer();
@@ -95,7 +102,8 @@ let Kaph = function () {
 
     // draws the mark indicating the number 1
     let drawMark = function() {
-        DrawLine(Math.PI * 1.5, 1, grey);
+        let count = Prime.GetCurrentNumber();
+        drawMethod(Math.PI * 1.5, 1, grey, count);
     };
 
     let DrawPointer = function () {
@@ -114,7 +122,7 @@ let Kaph = function () {
 
         let color = `rgba(255,255,255, ${alpha})`;
 
-        DrawLine(angle, 1, color);
+        drawMethod(angle, 1, color, count);
     };
 
     let DrawPrimes = function () {
@@ -136,26 +144,26 @@ let Kaph = function () {
         return Math.pow(percent, pow);
     };
 
-    let DrawPrime = function (number, count, color) {
+    let DrawPrime = function (n, count, color) {
         let initialAngle = Math.PI * 1.5;
-        let percent = (count % number) / number;
+        let percent = (count % n) / n;
         let angle = initialAngle + Math.PI * 2.0 * percent;
 
-        //let lengthPercent = Math.log(number);
+        //let lengthPercent = Math.log(n);
 
-        //let lengthPercent = number / count; // normal
+        //let lengthPercent = n / count; // normal
 
-        let lengthPercent = 1 - (number / count); // invert
+        let lengthPercent = 1 - (n / count); // invert
 
-        //let lengthPercent = Math.log(number / count) / Math.log(1);
-        //let lengthPercent = Math.log(number) / Math.log(count*power);
+        //let lengthPercent = Math.log(n / count) / Math.log(1);
+        //let lengthPercent = Math.log(n) / Math.log(count*power);
 
         //lengthPercent = Math.pow(lengthPercent, power);
 
         lengthPercent = lengthPercent >= 1 ? 1 : lengthPercent;
 
         // ease the percent
-        let easePercent = Math.min(1, count / 1000);
+        //let easePercent = Math.min(1, currentNumber / 1000);
         //let easePower = Math.max(1, 10 * easePercent);
 
         let easePower = Math.log(count) * 0.5;
@@ -204,10 +212,8 @@ let Kaph = function () {
         ctx.fillStyle = color;
         ctx.fill();
         ctx.restore();
-
-        if (color == null) { color = Color.ByNumber(number, 1000, alpha); }
-        DrawLine(angle, lengthPercent, color);
     };
+
 
     let DrawLine = function (angle, lengthPercent, color) {
 
@@ -270,3 +276,4 @@ let Kaph = function () {
 if (typeof exports !== "undefined") {
     exports.Kaph = Kaph;
 }
+

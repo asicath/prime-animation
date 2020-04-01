@@ -7,6 +7,7 @@ const Prime = function () {
     let primes = [];
     let acceleration = 0.001;
     let leftOverSeconds = 0;
+    let totalTime = 0;
 
     let framesPerSecond = 60;
     let msPerFrame = 1000 / framesPerSecond;
@@ -21,6 +22,8 @@ const Prime = function () {
     }
 
     let AddTime = function (time) {
+
+        totalTime += time;
 
         while (time > 0) {
 
@@ -45,6 +48,10 @@ const Prime = function () {
         }
 
         AddPrimes();
+    };
+
+    let GetTime = function() {
+        return totalTime;
     };
 
     let GetCountPerSecond = function () {
@@ -91,6 +98,7 @@ const Prime = function () {
         Current: primes,
         GetCountPerSecond,
         GetLastWholeNumber,
+        GetTime,
         Acceleration,
         AddTime
     };
