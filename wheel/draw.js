@@ -12,7 +12,7 @@ let Kaph = function () {
     const capType = 'round';
 
     let radius; // radius of the circle
-    let alpha = 0.05; // the alpha value of all line colors drawn
+    let alphaBase = 0.2; // the alpha value of all line colors drawn
 
     // numbers that will be scaled
     let lineWidth, minLineLength, fontSize;
@@ -153,23 +153,19 @@ let Kaph = function () {
 
         //let lengthPercent = n / count; // normal
 
-        let lengthPercent = 1 - (n / count); // invert
-
-        //let lengthPercent = Math.log(n / count) / Math.log(1);
-        //let lengthPercent = Math.log(n) / Math.log(count*power);
-
-        //lengthPercent = Math.pow(lengthPercent, power);
-
-        lengthPercent = lengthPercent >= 1 ? 1 : lengthPercent;
+        let lengthPercentBase = 1 - (n / count); // invert
 
         // ease the percent
         //let easePercent = Math.min(1, currentNumber / 1000);
         //let easePower = Math.max(1, 10 * easePercent);
 
         let easePower = Math.log(count) * 0.5;
-        lengthPercent = ease(lengthPercent, easePower);
+        const lengthPercent = ease(lengthPercentBase, easePower);
 
-        if (color == null) { color = Color.ByNumber(n, 1000, alpha); }
+        // vary the alpha value as well
+        const alphaValue = alphaBase; // * lengthPercentBase;
+
+        if (color == null) { color = Color.ByNumber(n, 1000, alphaValue); }
         drawMethod(angle, lengthPercent, color, count);
     };
 
