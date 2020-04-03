@@ -83,6 +83,20 @@ let Color = function () {
     };
 
     let ByNumber = function (number, max, alpha) {
+
+        // special case for 3 colors
+        if (max === 3) {
+            let i = number % 3;
+            switch(i) {
+                case 0:
+                    return `rgba(255,0,0,${alpha})`;
+                case 1:
+                    return `rgba(0,255,0,${alpha})`;
+                case 2:
+                    return `rgba(0,0,255,${alpha})`;
+            }
+        }
+
         while (number > max) { number -= max; }
         return ByPercent(number / max, 170, alpha);
     };
