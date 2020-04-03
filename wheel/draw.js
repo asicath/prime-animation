@@ -13,7 +13,7 @@ let Kaph = function () {
 
     let radius; // radius of the circle
     let alphaBase = 0.5; // the alpha value of all line colors drawn
-    let colorsPerRainbow = 1000;
+    let colorsPerRainbow = 120;
 
     // numbers that will be scaled
     let lineWidth, minLineLength, fontSize;
@@ -129,7 +129,7 @@ let Kaph = function () {
     let DrawPrimes = function () {
         let number = Prime.GetCurrentNumber();
         for (let i = Prime.Current.length; i >= 0; i--) {
-            DrawPrime(Prime.Current[i], number, null);
+            DrawPrime(Prime.Current[i], number, null, i);
         }
     };
 
@@ -137,7 +137,7 @@ let Kaph = function () {
         let number = Prime.GetCurrentNumber();
         //let maxNumber = Prime.Current[Prime.Current.length-1];
         for (let i = 0; i < Prime.Current.length; i++) {
-            DrawPrime(Prime.Current[i], number, null);
+            DrawPrime(Prime.Current[i], number, null, i);
         }
     };
 
@@ -145,7 +145,7 @@ let Kaph = function () {
         return Math.pow(percent, pow);
     };
 
-    let DrawPrime = function (n, count, color) {
+    let DrawPrime = function (n, count, color, iColor) {
         let initialAngle = Math.PI * 1.5;
         let percent = (count % n) / n;
         let angle = initialAngle + Math.PI * 2.0 * percent;
@@ -166,7 +166,7 @@ let Kaph = function () {
         let alphaValue = alphaBase;
         alphaValue *= ease(lengthPercentBase, easePower);
 
-        if (color == null) { color = Color.ByNumber(n, colorsPerRainbow, alphaValue); }
+        if (color == null) { color = Color.ByNumber(iColor, colorsPerRainbow, alphaValue); }
         drawMethod(angle, lengthPercent, color, count);
     };
 
