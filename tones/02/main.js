@@ -20,9 +20,14 @@ for (let i = 1; i <= 5; i++) {
 const config = {
     noteStart: 14,
     noteCount: 12,
-    numberStart: 2000000,
-    bpmStart: 300
+    numberStart: 1,
+    bpmStart: 210,
+
+    bpmTarget: 300,
+    bpmTargetAt: 1000000
 };
+
+
 
 //const activeNotes = allNotes.splice(19,7);
 const activeNotes = allNotes.splice(config.noteStart, config.noteCount);
@@ -33,23 +38,39 @@ const notes = activeNotes.map(name => {
 
 let polySynth = null;
 let n = config.numberStart;
+let bpm = config.bpmStart;
 let ranges = range.getRangeAt(n, notes.length);
 let interval = null;
+let waitTime = -1;
 
 function start() {
     polySynth = new Tone.PolySynth(notes.length - 1, Tone.Synth).toMaster();
 
-    let intervalTime = Math.floor((1000*60) / config.bpmStart);
+    // determine the rate of increase of bpm
+    let bpmFactor = (config.bpmTarget - config.bpmStart) / Math.log(config.bpmTargetAt);
 
     let prevTime = 0;
-    interval = setInterval(() => {
-        let now = Date.now();
-        let time = now - prevTime;
-        prevTime = now;
+    let loop = () => {
 
-        next(time);
+        let frameStart = Date.now();
+        let time = frameStart - prevTime;
 
-    }, intervalTime);
+        // advance the frame
+        next();
+
+        let frameTime = Date.now() - frameStart;
+        prevTime = frameStart;
+
+        bpm = config.bpmStart + Math.log(n) * bpmFactor;
+        let wait = Math.max(0, Math.floor((1000*60) / bpm) - frameTime);
+        waitTime = wait; // TODO debug only
+        //console.log(wait);
+        interval = setTimeout(loop, wait);
+
+        // TODO, put the calculations for the next loop here
+    };
+
+    loop();
 }
 
 function restart() {
@@ -99,7 +120,7 @@ function padNumberAlignLeft(n, length) {
 
 
 function setupDisplay() {
-    $('#display').append(`<div id="n">n:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</div>`);
+    $('#display').append(`<div id="n"></div>`);
     $('#display').append(`<div>&nbsp;</div>`);
     $('#display').append(`<div id="header">&nbsp;&nbsp;&nbsp;factors&nbsp;&nbsp;% of &#8734;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;range&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count</div>`);
 
@@ -111,13 +132,42 @@ function setupDisplay() {
 
 $(function() {
     setupDisplay();
+    updateDisplay();
 });
 
-function next(time) {
+function updateDisplay(ranges = null) {
+
+    let topRow = `n:${formatNumber(n, 8)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bpm:${formatNumber(Math.floor(bpm), 4)}`;
+    if (waitTime > -1) topRow += padNumberAlignRight(waitTime, 8);
+    $('#n').html(topRow);
+
+    for (let l = 0; l < notes.length; l++) {
+        let note = notes[l];
+
+        // display
+        let displayValue = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+        if (note.isActive) {
+            //displayValue = "++++";
+            displayValue = formatNumber(note.factor, 7);
+        }
+
+        displayValue += '|';
+
+        if (ranges !== null && l < ranges.length) {
+            let r = ranges[l];
+            displayValue += ' ' + r.active.toFixed(4);
+            //displayValue += ' ' + (r.next || 0).toFixed(4);
+            displayValue += ' ' + padNumberAlignRight(r.start, 7) + '-' + padNumberAlignLeft(r.end, 7);
+            displayValue += padNumberAlignRight(r.count, 6);
+        }
+
+        $('#' + note.name + ' .value').html(displayValue);
+    }
+}
+
+function next() {
 
     if (interval === null) return;
-
-    $('#n').html('n:' + formatNumber(n, 8));
 
     let ranges = range.getRangeAt(n, notes.length);
     let factors = range.getPrimeFactors(n);
@@ -144,7 +194,6 @@ function next(time) {
     for (let l = 0; l < notes.length; l++) {
         let note = notes[l];
 
-
         // if the note is active and is not playing
         if (note.isActive && !note.isPlaying) {
             //polySynth.triggerAttackRelease(note.name, "1n", time);
@@ -161,25 +210,9 @@ function next(time) {
             note.isPlaying = false;
         }
 
-        // display
-        let displayValue = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-        if (note.isActive) {
-            //displayValue = "++++";
-            displayValue = formatNumber(note.factor, 7);
-        }
-
-        displayValue += '|';
-
-        if (l < ranges.length) {
-            let r = ranges[l];
-            displayValue += ' ' + r.active.toFixed(4);
-            //displayValue += ' ' + (r.next || 0).toFixed(4);
-            displayValue += ' ' + padNumberAlignRight(r.start, 7) + '-' + padNumberAlignLeft(r.end, 7);
-            displayValue +=  padNumberAlignRight(r.count, 6);
-        }
-        
-        $('#' + note.name + ' .value').html(displayValue);
     }
+
+    updateDisplay(ranges);
 
     n += 1;
 }
