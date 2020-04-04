@@ -4,12 +4,22 @@ let range = (function() {
     let exports = {};
 
     let primes = [];
-    let upTo = 1;
+
+    // initialize the primes
+    addPrime(2);
+    addPrime(3);
+    addPrime(5);
+    let upToA = 1;
+    let upToB = 5;
+
+    createPrimesTo(100);
 
     function createPrimesTo(n) {
-        while (n > upTo) {
-            upTo += 1;
-            if (isPrime(upTo)) addPrime(upTo);
+        while (upToA < n && upToB < n) {
+            upToA += 6;
+            if (isPrime(upToA)) addPrime(upToA);
+            upToB += 6;
+            if (isPrime(upToB)) addPrime(upToB);
         }
     }
 

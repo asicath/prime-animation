@@ -3,10 +3,14 @@
 
     <style>
         body {
-            font-family: "Courier New";
-            font-size: 0.8em;
+            font-family: "Consolas","Courier New";
             background-color: black;
             color: #ccc;
+        }
+        table {
+            border: 0;
+            border-spacing: 0;
+            font-size: 1.8em;
         }
         #config table, #config input, #config select {
             font-size: 1em;
@@ -43,6 +47,9 @@
         #pause {
 
         }
+        .point {
+            margin-top: 0.4em;
+        }
     </style>
 
 </head>
@@ -52,11 +59,48 @@
 <script type="text/javascript" src="range-add.js"></script>
 <script type="text/javascript" src="main.js"></script>
 
-<div id="display"></div>
+<table>
+    <tr>
+        <td style="vertical-align: top;">
+            <div id="display"></div>
+        </td>
+        <td style="padding-left: 2em; vertical-align: top;" width="66%">
+            <div>&nbsp;</div>
+
+            <div>1. A prime number is a prime factor for 1/n of all integers</div>
+            <div>&nbsp;&nbsp;&nbsp;2 is a prime factor of a half of all integers</div>
+            <div>&nbsp;&nbsp;&nbsp;3 is a prime factor of a third of all integers</div>
+            <div class="point">2. Numbers which have prime factors are not prime</div>
+            <div>&nbsp;&nbsp;&nbsp;we will say they are covered by their prime factor</div>
+            <div>&nbsp;&nbsp;&nbsp;2 covers 4, 6, 8, 10, 12, 14, ...</div>
+            <div>&nbsp;&nbsp;&nbsp;3 covers 6, 9, 12, 15, 18, 21, ...</div>
+
+            <div class="point">3. For a set of primes, the coverages are combined thus:</div>
+            <div>&nbsp;&nbsp;&nbsp;1/n<sub>0</sub> + (1/n<sub>0</sub> * 1/n<sub>1</sub>) + (1/n<sub>0</sub> * 1/n<sub>1</sub> * 1/n<sub>2</sub>) * ...</div>
+            <div class="point">&nbsp;&nbsp;&nbsp;The set of [2,3] covers 1/2 + 1/2*1/3 = 2/3 of all numbers</div>
+            <div>&nbsp;&nbsp;&nbsp;All primes above 3 are found in the left over 1/3</div>
+            <div class="point">&nbsp;&nbsp;&nbsp;The set of [2,3,5] covers 2/3+1/2*1/3*1/5 = 21/30</div>
+            <div>&nbsp;&nbsp;&nbsp;All primes above 5 are found in the left over 3/10</div>
+
+            <div class="point">4. To the left are prime number sets, empty at first</div>
+            <div class="point">5. n will count up through all numbers</div>
+            <div class="point">6. A prime number is added to the bottom set at n/2</div>
+            <div>&nbsp;&nbsp;&nbsp;2 is added at 4, 3 is added at 6, ...</div>
+            <div class="point">7. When a set's coverage exceeds the coverage of the set above it,</div>
+            <div>&nbsp;&nbsp;&nbsp;the smallest prime of the lower set is moved to the higher.</div>
+            <div class="point">8. Each set is assigned a note.</div>
+            <div>&nbsp;&nbsp;&nbsp;If that set contains a prime factor of n, that note is played.</div>
+
+        </td>
+    </tr>
+
+</table>
+
 
 <div id="control">
     <div id="start" class="btn" onclick="start();">start</div>
-    <div id="pause" class="btn">pause</div>
+    <div id="restart" class="btn" onclick="restart();">restart</div>
+    <div id="pause" class="btn" onclick="pause();">pause</div>
 </div>
 
 </body>

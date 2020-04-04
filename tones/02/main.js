@@ -1,53 +1,77 @@
-//let a = notes.slice(i,i+1);
 
-//a.push('A4');
+// first generate the notes that can be played
+const letters = ['C','D','E','F','G','A','B'];
+const allNotes = [];
+for (let i = 1; i <= 5; i++) {
+    letters.forEach(l => {
+        allNotes.push(l + i.toString());
+    })
+}
 
-//console.log(Tone.Transport.bpm.value);
-//console.log(a, time);
+// youtube recording
+// const config = {
+//     noteStart: 7, // 19 was original
+//     noteCount: 12,
+//     numberStart: 2,
+//     bpmStart: 300
+// };
 
-//polySynth.triggerAttackRelease('A4', "1n", time);
+// hopeful
+const config = {
+    noteStart: 14,
+    noteCount: 12,
+    numberStart: 2000000,
+    bpmStart: 300
+};
 
-//if (i < 2) polySynth.triggerAttackRelease('A3', "1n", time);
+//const activeNotes = allNotes.splice(19,7);
+const activeNotes = allNotes.splice(config.noteStart, config.noteCount);
 
-//polySynth.triggerAttackRelease(notes[i], "8n", time);
-//i = (i+1) % notes.length;
-
-
-
-const notes = ["A3", "B3", "C4", "D4", "E4", "F4", "G4"].map(name => {
-    return {
-        name,
-        isActive: false,
-        factor: 0
-    }
+const notes = activeNotes.map(name => {
+    return { name, isActive: false, isPlaying: false, factor: 0 }
 });
+
 let polySynth = null;
-let n = 2;
+let n = config.numberStart;
 let ranges = range.getRangeAt(n, notes.length);
+let interval = null;
 
 function start() {
-    polySynth = new Tone.PolySynth(7, Tone.Synth,{
+    polySynth = new Tone.PolySynth(notes.length - 1, Tone.Synth).toMaster();
 
-        filterEnvelope : {
-            attack : 0.06 ,
-            decay : 0.2 ,
-            sustain : 0.5 ,
-            release : 1 ,
-            baseFrequency : 200 ,
-            octaves : 7 ,
-            exponent : 2
-        }
-    }).toMaster();
+    let intervalTime = Math.floor((1000*60) / config.bpmStart);
 
-    const loop = new Tone.Loop(time => {
+    let prevTime = 0;
+    interval = setInterval(() => {
+        let now = Date.now();
+        let time = now - prevTime;
+        prevTime = now;
+
         next(time);
-    }, "1n");
 
-    loop.start();
+    }, intervalTime);
+}
 
-    Tone.Transport.start();
-    Tone.Transport.bpm.value = 500;
-    //Tone.Transport.bpm.rampTo(1000, 20);
+function restart() {
+
+}
+
+function pause() {
+
+    clearInterval(interval);
+    interval = null;
+
+    for (let l = 0; l < notes.length; l++) {
+        let note = notes[l];
+
+        // if note is not active, but is playing
+        if (note.isPlaying) {
+            // turn it off
+            polySynth.triggerRelease(note.name);
+            note.isPlaying = false;
+        }
+    }
+
 }
 
 function formatNumber(n, length) {
@@ -59,10 +83,13 @@ function formatNumber(n, length) {
 }
 
 function setupDisplay() {
-    $('#display').append('<div id="n"></div>')
+    $('#display').append(`<div id="n">n:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</div>`);
+    $('#display').append(`<div>&nbsp;</div>`);
+    $('#display').append(`<div id="header">&nbsp;&nbsp;&nbsp;factors&nbsp;&nbsp;% of &#8734;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;range&nbsp;&nbsp;&nbsp;count</div>`);
+
     for (let l = 0; l < notes.length; l++) {
         let note = notes[l];
-        $('#display').append('<div id="' + note.name + '"><div>' + note.name + '|<span class="value">test</span></div></div>');
+        $('#display').append('<div id="' + note.name + '"><div>' + note.name + '|<span class="value">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span></div></div>');
     }
 }
 
@@ -72,7 +99,9 @@ $(function() {
 
 function next(time) {
 
-    $('#n').html('&nbsp;&nbsp;&nbsp;' + formatNumber(n, 5));
+    if (interval === null) return;
+
+    $('#n').html('n:' + formatNumber(n, 8));
 
     let ranges = range.getRangeAt(n, notes.length);
     let factors = range.getPrimeFactors(n);
@@ -99,16 +128,28 @@ function next(time) {
     for (let l = 0; l < notes.length; l++) {
         let note = notes[l];
 
-        // set the note
-        if (note.isActive) {
-            polySynth.triggerAttackRelease(note.name, "1n", time);
+
+        // if the note is active and is not playing
+        if (note.isActive && !note.isPlaying) {
+            //polySynth.triggerAttackRelease(note.name, "1n", time);
+
+            // turn it on
+            polySynth.triggerAttack(note.name);
+            note.isPlaying = true;
+        }
+
+        // if note is not active, but is playing
+        else if (!note.isActive && note.isPlaying) {
+            // turn it off
+            polySynth.triggerRelease(note.name);
+            note.isPlaying = false;
         }
 
         // display
-        let displayValue = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+        let displayValue = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
         if (note.isActive) {
             //displayValue = "++++";
-            displayValue = formatNumber(note.factor, 5);
+            displayValue = formatNumber(note.factor, 7);
         }
 
         displayValue += '|';
@@ -118,7 +159,7 @@ function next(time) {
             displayValue += ' ' + r.active.toFixed(4);
             //displayValue += ' ' + (r.next || 0).toFixed(4);
             displayValue += ' ' + formatNumber(r.start, 5) + '-' + formatNumber(r.end, 5);
-            displayValue += ' ' + r.count;
+            displayValue += '&nbsp;&nbsp;&nbsp;&nbsp;' + r.count;
         }
         
         $('#' + note.name + ' .value').html(displayValue);
