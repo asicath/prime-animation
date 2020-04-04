@@ -82,10 +82,26 @@ function formatNumber(n, length) {
     return s.replace(/\s/g, '&nbsp;');
 }
 
+function padNumberAlignRight(n, length) {
+    let s = n.toString();
+    while (s.length < length) {
+        s = ' ' + s;
+    }
+    return s.replace(/\s/g, '&nbsp;');;
+}
+function padNumberAlignLeft(n, length) {
+    let s = n.toString();
+    while (s.length < length) {
+        s = s + ' ';
+    }
+    return s.replace(/\s/g, '&nbsp;');;
+}
+
+
 function setupDisplay() {
     $('#display').append(`<div id="n">n:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1</div>`);
     $('#display').append(`<div>&nbsp;</div>`);
-    $('#display').append(`<div id="header">&nbsp;&nbsp;&nbsp;factors&nbsp;&nbsp;% of &#8734;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;range&nbsp;&nbsp;&nbsp;count</div>`);
+    $('#display').append(`<div id="header">&nbsp;&nbsp;&nbsp;factors&nbsp;&nbsp;% of &#8734;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;range&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;count</div>`);
 
     for (let l = 0; l < notes.length; l++) {
         let note = notes[l];
@@ -158,8 +174,8 @@ function next(time) {
             let r = ranges[l];
             displayValue += ' ' + r.active.toFixed(4);
             //displayValue += ' ' + (r.next || 0).toFixed(4);
-            displayValue += ' ' + formatNumber(r.start, 5) + '-' + formatNumber(r.end, 5);
-            displayValue += '&nbsp;&nbsp;&nbsp;&nbsp;' + r.count;
+            displayValue += ' ' + padNumberAlignRight(r.start, 7) + '-' + padNumberAlignLeft(r.end, 7);
+            displayValue +=  padNumberAlignRight(r.count, 6);
         }
         
         $('#' + note.name + ' .value').html(displayValue);
