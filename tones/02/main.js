@@ -16,18 +16,34 @@ for (let i = 1; i <= 5; i++) {
 //     bpmStart: 300
 // };
 
+const numberStart = 1000000;
+
 // hopeful
-const config = {
+const themeHopeful = {
+    name: 'hopeful',
+
     noteStart: 14,
     noteCount: 12,
-    numberStart: 1,
-    bpmStart: 210,
 
+    bpmStart: 210,
     bpmTarget: 300,
-    bpmTargetAt: 1000000
+    bpmTargetAt: 1000000,
+    bpmIncreaseFn: 'ln'
 };
 
+const themeGoth = {
+    name: 'inevitable',
 
+    noteStart: 12,
+    noteCount: 7,
+
+    bpmStart: 170,
+    bpmTarget: 220,
+    bpmTargetAt: 1000000,
+    bpmIncreaseFn: 'ln'
+};
+
+const config = themeHopeful;
 
 //const activeNotes = allNotes.splice(19,7);
 const activeNotes = allNotes.splice(config.noteStart, config.noteCount);
@@ -37,7 +53,7 @@ const notes = activeNotes.map(name => {
 });
 
 let polySynth = null;
-let n = config.numberStart;
+let n = numberStart;
 let bpm = config.bpmStart;
 let ranges = range.getRangeAt(n, notes.length);
 let interval = null;
@@ -63,7 +79,7 @@ function start() {
 
         bpm = config.bpmStart + Math.log(n) * bpmFactor;
         let wait = Math.max(0, Math.floor((1000*60) / bpm) - frameTime);
-        waitTime = wait; // TODO debug only
+        //waitTime = wait; // TODO debug only
         //console.log(wait);
         interval = setTimeout(loop, wait);
 
@@ -128,6 +144,21 @@ function setupDisplay() {
         let note = notes[l];
         $('#display').append('<div id="' + note.name + '"><div>' + note.name + '|<span class="value">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;|</span></div></div>');
     }
+
+    // show the config
+    //let text = JSON.stringify(config, null, 2);
+
+    let text = `theme: "${config.name}"
+&nbsp;&nbsp;first note: ${activeNotes[0]}
+&nbsp;&nbsp;note count: ${config.noteCount}
+&nbsp;&nbsp;bpm start: ${config.bpmStart}
+&nbsp;&nbsp;bpm target: ${config.bpmTarget}
+&nbsp;&nbsp;bpm target at: ${config.bpmTargetAt}
+&nbsp;&nbsp;bpm increase function: log<sub>e</sub>`;
+
+
+    text = text.replace(/\n/g, '<br/>').replace(/\s/g, '&nbsp;');
+    $('#config').html(text);
 }
 
 $(function() {
@@ -137,7 +168,7 @@ $(function() {
 
 function updateDisplay(ranges = null) {
 
-    let topRow = `n:${formatNumber(n, 8)}&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;bpm:${formatNumber(Math.floor(bpm), 4)}`;
+    let topRow = `n:${padNumberAlignRight(n, 8)}&nbsp;&nbsp;bpm:${formatNumber(Math.floor(bpm), 4)}`;
     if (waitTime > -1) topRow += padNumberAlignRight(waitTime, 8);
     $('#n').html(topRow);
 
