@@ -1,44 +1,10 @@
 
-let range = (function() {
+const range = (function() {
 
-    let exports = {};
+    const primes = [];
 
-    let primes = [];
-
-    // initialize the primes
-    addPrime(2);
-    addPrime(3);
-    addPrime(5);
-    let upToA = 1;
-    let upToB = 5;
-
-    createPrimesTo(100);
-
-    function createPrimesTo(n) {
-        while (upToA < n && upToB < n) {
-            upToA += 6;
-            if (isPrime(upToA)) addPrime(upToA);
-            upToB += 6;
-            if (isPrime(upToB)) addPrime(upToB);
-        }
-    }
-
-    function isPrime(n) {
-
-        let max = Math.floor(Math.sqrt(n));
-
-        for (let j = 0; j < primes.length; j++) {
-            let prime = primes[j];
-
-            // don't find above the limit
-            if (prime.n > max) return true;
-
-            // found a factor
-            if (n % prime.n === 0) return false;
-        }
-
-        return true;
-    }
+    Prime.on('prime', addPrime);
+    Prime.init();
 
     function addPrime(n) {
 
@@ -58,30 +24,12 @@ let range = (function() {
         primes.push(prime);
     }
 
-    exports.getPrimeFactors = function(n) {
-
-        let factors = [];
-        let max = n * n;
-
-        for (let j = 0; j < primes.length; j++) {
-            let prime = primes[j];
-
-            // don't find above the limit
-            if (prime.n > max) break;
-
-            // found a factor
-            if (n % prime.n === 0) factors.push(prime.n);
-        }
-
-        return factors;
-    };
-
-    exports.getRangeAt = function(n, intervalCount) {
+    function getRangeAt(n, intervalCount) {
 
         // make sure we've got enough primes
         //let target = Math.floor(Math.sqrt(n));
         let target = Math.floor(n/2);
-        createPrimesTo(n);
+        Prime.createPrimesTo(n);
 
         // find the max prime for this number
         let iMax = primes.length - 1;
@@ -90,11 +38,11 @@ let range = (function() {
         }
 
         // get max coverage
-        let coverage = primes[iMax].sumCoverage;
+        //let coverage = primes[iMax].sumCoverage;
 
         let ranges = [];
         let range = null;
-        let prime, i = 0;
+        let i = 0;
 
         // create the initial ranges, up to the max count
         while (i <= iMax && ranges.length < intervalCount) {
@@ -119,7 +67,7 @@ let range = (function() {
         }
 
         return ranges;
-    };
+    }
 
     function checkForBalance(j, ranges) {
 
@@ -214,7 +162,9 @@ let range = (function() {
         return next;
     }
 
-    return exports;
+    return {
+        getRangeAt
+    }
 })();
 
 //console.log(range.getRangeAt(2, 7));

@@ -16,7 +16,8 @@ for (let i = 1; i <= 5; i++) {
 //     bpmStart: 300
 // };
 
-const numberStart = 1000000;
+//const numberStart = 1000000;
+const numberStart = 10;
 
 // hopeful
 const themeHopeful = {
@@ -201,7 +202,7 @@ function next() {
     if (interval === null) return;
 
     let ranges = range.getRangeAt(n, notes.length);
-    let factors = range.getPrimeFactors(n);
+    let factors = Prime.getPrimeFactors(n);
 
     // reset isActive
     for (let i = 0; i < notes.length; i++) {
