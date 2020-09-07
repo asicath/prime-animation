@@ -61,6 +61,10 @@ function generateSoundData() {
     notes[0] = {name: 'a4', freq: 440};
     notes[1] = {name: 'b4', freq: notes[0].freq * ratio**2};
     notes[2] = {name: 'c5', freq: notes[1].freq * ratio};
+    notes[3] = {name: 'd5', freq: notes[2].freq * ratio**2};
+    notes[4] = {name: 'e5', freq: notes[3].freq * ratio**2};
+    notes[5] = {name: 'f5', freq: notes[4].freq * ratio};
+    notes[6] = {name: 'g5', freq: notes[5].freq * ratio**2};
 
     // create the prev state, set all the notes to silence
     let prevState = {n:1, notes:[]};
@@ -78,12 +82,16 @@ function generateSoundData() {
     const buckets = [];
     buckets[0] = {primes:[2]};
     buckets[1] = {primes:[3]};
-    buckets[2] = {primes:[5,7]};
+    buckets[2] = {primes:[5]};
+    buckets[3] = {primes:[7]};
+    buckets[4] = {primes:[11]};
+    buckets[5] = {primes:[13]};
+    buckets[6] = {primes:[17]};
 
     // now sound info
-    const duration = 1000;
+    const duration = 300;
     const admr = {
-        attack: 0.01,
+        attack: 0.05,
         decay: 0.1,
         release: 0.1,
         attackVolume: 1,
@@ -91,7 +99,7 @@ function generateSoundData() {
     };
 
     const data = [];
-    for (let n = 3; n < 60; n++) {
+    for (let n = 3; n < 1000; n++) {
 
         // determine which notes are active
         let nextState = {n, notes:[]};
@@ -160,7 +168,7 @@ function generateSoundData() {
 
     // apply max volume
     let max = 32767;
-    max = max / 3;
+    max = max / 4;
     const output = data.map(v => {return v * max;});
 
     return output;
@@ -211,7 +219,38 @@ function getSoundDataByState({sampleRate, duration, admr, note, prevState, state
     for (let i = 0; i < samples; i++) {
 
         // determine the volume based on admr
-        let volume = 1; // no admr yet
+        let volume = admr.sustainVolume; // the base volume, assume a sustain
+
+        // determine the percent
+        let percent = i / samples;
+
+        // attack
+        if (percent < admr.attack) {
+            if (!prevState.active) { // only if the previous state was not playing
+                let attackPercent = percent / admr.attack; // the percent 0-1 we are into the attack
+                volume = attackPercent * admr.attackVolume;
+            }
+        }
+
+        // decay
+        else if (percent < admr.attack + admr.decay) {
+            if (!prevState.active) { // only if the previous state was not playing
+                let decayPercent = (percent - admr.attack) / admr.decay; // the percent 0-1 we are into the decay
+                let decayAmount = admr.attackVolume - admr.sustainVolume; // the total amount that attack will decay into sustain
+                volume = admr.attackVolume - decayPercent * decayAmount;
+            }
+        }
+
+        // release
+        else if (percent >= 1 - admr.release) {
+            if (!nextState.active) { // only if not active in the next state (move to silence)
+                let releasePercent = (percent - (1 - admr.release)) / admr.release;
+                volume = (1-releasePercent) * admr.sustainVolume;
+            }
+        }
+
+
+
 
         // determine the angle
         a = ((i % waveLength) / waveLength) * Math.PI * 2;
