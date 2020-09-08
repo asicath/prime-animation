@@ -40,7 +40,7 @@ function generateWav() {
         .field('fmtSubChunk', fmtSubChunkStruct)
         .field('dataSubChunk', dataSubChunkStruct);
 
-    fs.writeFileSync(path.join(__dirname, '/new.wav'), fileStruct.toBuffer());
+    fs.writeFileSync(path.join(__dirname, '/new12-0.wav'), fileStruct.toBuffer());
 }
 
 function combine(a, b) {
@@ -113,37 +113,58 @@ function generateSoundData() {
     // first generate the notes to be used
     let ratio = 2**(1/12);
     let notes = [];
-    notes[0] = {name: 'A', freq: 220};
-    notes[1] = {name: 'B', freq: notes[0].freq * ratio**2};
-    notes[2] = {name: 'C', freq: notes[1].freq * ratio};
-    notes[3] = {name: 'D', freq: notes[2].freq * ratio**2};
-    notes[4] = {name: 'E', freq: notes[3].freq * ratio**2};
-    notes[5] = {name: 'F', freq: notes[4].freq * ratio};
-    notes[6] = {name: 'G', freq: notes[5].freq * ratio**2};
+    let freq = 220; // A
+    freq *= ratio; // A#
+    freq *= ratio; // B
+    freq *= ratio; // C
+    notes.push({ freq: freq}); // 1
+    freq *= ratio; // C#
+    freq *= ratio; // D
+    notes.push({ freq: freq}); // 2
+    freq *= ratio; // D#
+    freq *= ratio; // E
+    notes.push({ freq: freq}); // 3
+    freq *= ratio; // F
+    notes.push({ freq: freq}); // 4
+    freq *= ratio; // F#
+    freq *= ratio; // G
+    notes.push({ freq: freq}); // 5
+    freq *= ratio; // G#
+
+    freq *= ratio; // A
+    notes.push({ freq: freq}); // 6
+    freq *= ratio; // A#
+    freq *= ratio; // B
+    notes.push({ freq: freq}); // 7
+    freq *= ratio; // C
+    notes.push({ freq: freq}); // 8
+    freq *= ratio; // C#
+    freq *= ratio; // D
+    notes.push({ freq: freq}); // 9
+    freq *= ratio; // D#
+    freq *= ratio; // E
+    notes.push({ freq: freq}); // 10
+    freq *= ratio; // F
+    notes.push({ freq: freq}); // 11
+    freq *= ratio; // F#
+    freq *= ratio; // G
+    notes.push({ freq: freq}); // 12
+    freq *= ratio; // G#
+
 
     // create the prev state, set all the notes to silence
+    // also, setup the current state
     let prevState = {n:1, notes:[]};
+    let state = {n:2, notes:[]};
+    const buckets = [];
     for (let i = 0; i < notes.length; i++) {
         prevState.notes[i] = {a: 0, active: false};
-    }
-
-    // setup the current state
-    let state = {n:2, notes:[]};
-    for (let i = 0; i < notes.length; i++) {
         state.notes[i] = {a: 0, active: false};
+
+        buckets[i] = {primes:[], coverage: 0};
     }
 
     const primeQueue = [2];
-
-    // next the buckets
-    const buckets = [];
-    buckets[0] = {primes:[], coverage: 0};
-    buckets[1] = {primes:[], coverage: 0};
-    buckets[2] = {primes:[], coverage: 0};
-    buckets[3] = {primes:[], coverage: 0};
-    buckets[4] = {primes:[], coverage: 0};
-    buckets[5] = {primes:[], coverage: 0};
-    buckets[6] = {primes:[], coverage: 0};
 
     // now sound info
     const duration = 300;
@@ -156,7 +177,7 @@ function generateSoundData() {
     };
 
     const data = [];
-    for (let n = 3; n < 1000; n++) {
+    for (let n = 3; n < 2000; n++) {
 
         // determine if we need to move a prime from the queue to the buckets
         if (primeQueue[0] * 2 === n) {
@@ -169,10 +190,11 @@ function generateSoundData() {
             // now rebalance
             rebalanceBuckets(buckets);
 
-            //console.log('------');
-            //buckets.forEach((bucket, i) => {
-            //    console.log(`${i} ${bucket.primes.length} ${bucket.coverage}`);
-            //});
+            console.log('------');
+            console.log(`in queue ${primeQueue.length}`);
+            buckets.forEach((bucket, i) => {
+                console.log(`${i} ${bucket.primes.length} ${bucket.coverage}`);
+            });
         }
 
         // determine which notes are active
