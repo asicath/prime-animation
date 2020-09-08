@@ -51,20 +51,75 @@ function combine(a, b) {
     return ab;
 }
 
+function addPrimeToBucket(bucket, prime) {
+    bucket.primes.push(prime);
 
+    if (bucket.coverage === 0) {
+        bucket.coverage = 1 / prime;
+    }
+    else {
+        // the original coverage, plus a portion of the non-covered
+        bucket.coverage = bucket.coverage + (1 - bucket.coverage) / prime;
+        // 2 = 3/6
+        // 3 = 2/6
+        // 2+3 = 3/6 + (3/6) / 3 = 4/6 = 2/3
+    }
+}
+
+function removeSmallestPrime(bucket) {
+    let prime = bucket.primes.shift();
+
+    if (bucket.primes.length === 0) {
+        bucket.coverage = 0;
+    }
+    else {
+        // the uncovered portion gains a proportionate amount back.
+        bucket.coverage = bucket.coverage - (1 - bucket.coverage) / (prime-1);
+
+        // 2+3 = 4/6
+        // remove 2 = 4/6 - ((2/6) / (2-1)) = 2/6 = 1/3
+
+        //3&5 = 5/15 + 10/15 / 5 = 5/15 + 2/15 = 7/15
+        // remove 3 = 7/15 - (8/15) / (3-1) = 7/15 - 4/15 = 3/15 = 1/5
+    }
+    return prime;
+}
+
+function rebalanceBuckets(buckets) {
+
+    let balanced = false;
+
+    while (!balanced) {
+        balanced = true;
+        for (let i = buckets.length - 1; i > 0; i--) {
+            let a = buckets[i]; // should be smaller coverage
+            let b = buckets[i-1];
+
+            if (a.coverage > b.coverage) {
+                // need to move a prime
+                let prime = removeSmallestPrime(a);
+                addPrimeToBucket(b, prime);
+
+                // restart
+                balanced = false;
+                break;
+            }
+        }
+    }
+}
 
 function generateSoundData() {
 
     // first generate the notes to be used
     let ratio = 2**(1/12);
     let notes = [];
-    notes[0] = {name: 'a4', freq: 440};
-    notes[1] = {name: 'b4', freq: notes[0].freq * ratio**2};
-    notes[2] = {name: 'c5', freq: notes[1].freq * ratio};
-    notes[3] = {name: 'd5', freq: notes[2].freq * ratio**2};
-    notes[4] = {name: 'e5', freq: notes[3].freq * ratio**2};
-    notes[5] = {name: 'f5', freq: notes[4].freq * ratio};
-    notes[6] = {name: 'g5', freq: notes[5].freq * ratio**2};
+    notes[0] = {name: 'A', freq: 220};
+    notes[1] = {name: 'B', freq: notes[0].freq * ratio**2};
+    notes[2] = {name: 'C', freq: notes[1].freq * ratio};
+    notes[3] = {name: 'D', freq: notes[2].freq * ratio**2};
+    notes[4] = {name: 'E', freq: notes[3].freq * ratio**2};
+    notes[5] = {name: 'F', freq: notes[4].freq * ratio};
+    notes[6] = {name: 'G', freq: notes[5].freq * ratio**2};
 
     // create the prev state, set all the notes to silence
     let prevState = {n:1, notes:[]};
@@ -78,15 +133,17 @@ function generateSoundData() {
         state.notes[i] = {a: 0, active: false};
     }
 
+    const primeQueue = [2];
+
     // next the buckets
     const buckets = [];
-    buckets[0] = {primes:[2]};
-    buckets[1] = {primes:[3]};
-    buckets[2] = {primes:[5]};
-    buckets[3] = {primes:[7]};
-    buckets[4] = {primes:[11]};
-    buckets[5] = {primes:[13]};
-    buckets[6] = {primes:[17]};
+    buckets[0] = {primes:[], coverage: 0};
+    buckets[1] = {primes:[], coverage: 0};
+    buckets[2] = {primes:[], coverage: 0};
+    buckets[3] = {primes:[], coverage: 0};
+    buckets[4] = {primes:[], coverage: 0};
+    buckets[5] = {primes:[], coverage: 0};
+    buckets[6] = {primes:[], coverage: 0};
 
     // now sound info
     const duration = 300;
@@ -100,6 +157,23 @@ function generateSoundData() {
 
     const data = [];
     for (let n = 3; n < 1000; n++) {
+
+        // determine if we need to move a prime from the queue to the buckets
+        if (primeQueue[0] * 2 === n) {
+            // move the oldest prime into the buckets
+            let p = primeQueue.shift();
+
+            // put in the last bucket
+            addPrimeToBucket(buckets[buckets.length - 1], p);
+
+            // now rebalance
+            rebalanceBuckets(buckets);
+
+            //console.log('------');
+            //buckets.forEach((bucket, i) => {
+            //    console.log(`${i} ${bucket.primes.length} ${bucket.coverage}`);
+            //});
+        }
 
         // determine which notes are active
         let nextState = {n, notes:[]};
@@ -127,7 +201,7 @@ function generateSoundData() {
 
         // add to the last bucket if we found a prime
         if (isPrime) {
-
+            primeQueue.push(n);
         }
 
         // render the audio
