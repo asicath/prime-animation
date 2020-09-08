@@ -4,9 +4,10 @@ const C = require('construct-js');
 
 const sampleRate = 48000; // 96000;
 
-generateWav();
+let d = generateSoundData();
+//generateWav(d, 'new24-0.wav');
 
-function generateWav() {
+function generateWav(soundData, filename) {
     const riffChunkStruct = C.Struct('riffChunk')
         .field('magic', C.RawString('RIFF'))
         .field('size', C.U32LE(0))
@@ -31,7 +32,7 @@ function generateWav() {
         .field('data', C.S16LEs([0]));
 
 
-    const soundData = generateSoundData();
+    //const soundData = generateSoundData();
     dataSubChunkStruct.get('data').set(soundData);
     dataSubChunkStruct.get('size').set(soundData.length*2); // 2 bytes per value
 
@@ -40,7 +41,7 @@ function generateWav() {
         .field('fmtSubChunk', fmtSubChunkStruct)
         .field('dataSubChunk', dataSubChunkStruct);
 
-    fs.writeFileSync(path.join(__dirname, '/new12-0.wav'), fileStruct.toBuffer());
+    fs.writeFileSync(path.join(__dirname, `/${filename}`), fileStruct.toBuffer());
 }
 
 function combine(a, b) {
@@ -108,49 +109,48 @@ function rebalanceBuckets(buckets) {
     }
 }
 
+function generateAllFreqs() {
+    const ratio = 2**(1/12);
+    const a = [];
+
+    let freq = 55; // A1
+
+    for (let i = 1; i < 8; i++) {
+        a.push(freq);
+        freq *= ratio; // A#
+        freq *= ratio; // B
+        a.push(freq);
+        freq *= ratio; // C
+        a.push(freq);
+        freq *= ratio; // C#
+        freq *= ratio; // D
+        a.push(freq);
+        freq *= ratio; // D#
+        freq *= ratio; // E
+        a.push(freq);
+        freq *= ratio; // F
+        a.push(freq);
+        freq *= ratio; // F#
+        freq *= ratio; // G
+        a.push(freq);
+        freq *= ratio; // G#
+
+        freq *= ratio; // A
+    }
+
+    return a;
+}
+
 function generateSoundData() {
 
     // first generate the notes to be used
-    let ratio = 2**(1/12);
+    const freqs = generateAllFreqs();
+
+    let noteCount = 12;
     let notes = [];
-    let freq = 220; // A
-    freq *= ratio; // A#
-    freq *= ratio; // B
-    freq *= ratio; // C
-    notes.push({ freq: freq}); // 1
-    freq *= ratio; // C#
-    freq *= ratio; // D
-    notes.push({ freq: freq}); // 2
-    freq *= ratio; // D#
-    freq *= ratio; // E
-    notes.push({ freq: freq}); // 3
-    freq *= ratio; // F
-    notes.push({ freq: freq}); // 4
-    freq *= ratio; // F#
-    freq *= ratio; // G
-    notes.push({ freq: freq}); // 5
-    freq *= ratio; // G#
-
-    freq *= ratio; // A
-    notes.push({ freq: freq}); // 6
-    freq *= ratio; // A#
-    freq *= ratio; // B
-    notes.push({ freq: freq}); // 7
-    freq *= ratio; // C
-    notes.push({ freq: freq}); // 8
-    freq *= ratio; // C#
-    freq *= ratio; // D
-    notes.push({ freq: freq}); // 9
-    freq *= ratio; // D#
-    freq *= ratio; // E
-    notes.push({ freq: freq}); // 10
-    freq *= ratio; // F
-    notes.push({ freq: freq}); // 11
-    freq *= ratio; // F#
-    freq *= ratio; // G
-    notes.push({ freq: freq}); // 12
-    freq *= ratio; // G#
-
+    for (let i = 16; i < 16 + noteCount; i++) {
+        notes.push({ freq: freqs[i]}); // 1
+    }
 
     // create the prev state, set all the notes to silence
     // also, setup the current state
@@ -160,7 +160,6 @@ function generateSoundData() {
     for (let i = 0; i < notes.length; i++) {
         prevState.notes[i] = {a: 0, active: false};
         state.notes[i] = {a: 0, active: false};
-
         buckets[i] = {primes:[], coverage: 0};
     }
 
@@ -176,8 +175,8 @@ function generateSoundData() {
         sustainVolume: 0.6
     };
 
-    const data = [];
-    for (let n = 3; n < 2000; n++) {
+    let data = [];
+    for (let n = 3; n < 10000000; n++) {
 
         // determine if we need to move a prime from the queue to the buckets
         if (primeQueue[0] * 2 === n) {
@@ -189,12 +188,6 @@ function generateSoundData() {
 
             // now rebalance
             rebalanceBuckets(buckets);
-
-            console.log('------');
-            console.log(`in queue ${primeQueue.length}`);
-            buckets.forEach((bucket, i) => {
-                console.log(`${i} ${bucket.primes.length} ${bucket.coverage}`);
-            });
         }
 
         // determine which notes are active
@@ -260,14 +253,36 @@ function generateSoundData() {
 
         // add intervalData to data
         data.push(...intervalData);
+
+        // lets output
+        if (n % 1000 === 0) {
+
+            console.log('------');
+            console.log(n);
+            console.log(`in queue ${primeQueue.length}`);
+            buckets.forEach((bucket, i) => {
+                console.log(`${i} ${bucket.primes.length} ${bucket.coverage}`);
+            });
+
+            //if (n > 1000000) {
+                let s = n.toString();
+                while (s.length < 10) {
+                    s = "0" + s;
+                }
+
+                let max = 32767;
+                max = max / 4;
+                const output = data.map(v => {return v * max;});
+
+
+                generateWav(output, `new12-${s}.wav`);
+            //}
+
+
+            // reset
+            data = [];
+        }
     }
-
-    // apply max volume
-    let max = 32767;
-    max = max / 4;
-    const output = data.map(v => {return v * max;});
-
-    return output;
 }
 
 function getSilence({sampleRate, duration}) {
