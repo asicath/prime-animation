@@ -64,9 +64,18 @@ function generateSoundData() {
 
     let duration = 100;
 
-    const a = getNote(sampleRate, duration, a4);
-    const b = getNote(sampleRate, duration, b4);
-    const c = getNote(sampleRate, duration, c5);
+    const admr = {
+        attack: 0.01,
+        decay: 0.1,
+        release: 0.1,
+
+        attackVolume: 1,
+        sustainVolume: 0.6
+    };
+
+    const a = getNote(sampleRate, duration, a4, admr);
+    const b = getNote(sampleRate, duration, b4, admr);
+    const c = getNote(sampleRate, duration, c5, admr);
 
     const ab = combine(a, b);
     const ac = combine(a, c);
@@ -131,10 +140,24 @@ a gets a release
 ab -> b -> *
 b gets release
 
+state: {
+    notes: {
+        a: true,
+        b: true,
+        c: false
+    }
+}
+
  */
 
+function getMelodySection(prevState, state, nextState) {
 
-function getNote(sampleRate, duration, freq) {
+
+
+
+}
+
+function getNote(sampleRate, duration, freq, admr) {
     const data = [];
     let samples = sampleRate * (duration / 1000);
 
@@ -143,13 +166,7 @@ function getNote(sampleRate, duration, freq) {
     //
     let waveLength = Math.floor(sampleRate / freq);
 
-    let attack = 0.01;
-    let decay = 0.1;
-    let release = 0.1;
-    let sustain = 1 - attack - decay - release;
-
-    let attackVolume = 1;
-    let sustainVolume = 0.6;
+    let sustain = 1 - admr.attack - admr.decay - admr.release;
 
     for (let i = 0; i < samples; i++) {
 
@@ -157,19 +174,19 @@ function getNote(sampleRate, duration, freq) {
 
         let p = i / samples;
         // attack
-        if (p < attack) {
-            volume = attackVolume * p/attack;
+        if (p < admr.attack) {
+            volume = admr.attackVolume * p/admr.attack;
         }
-        else if (p < attack + decay) {
-            p -= attack;
-            volume = attackVolume - (p/decay) * (attackVolume-sustainVolume);
+        else if (p < admr.attack + admr.decay) {
+            p -= admr.attack;
+            volume = admr.attackVolume - (p/admr.decay) * (admr.attackVolume-admr.sustainVolume);
         }
-        else if (p < attack + decay + sustain) {
-            volume = sustainVolume;
+        else if (p < admr.attack + admr.decay + sustain) {
+            volume = admr.sustainVolume;
         }
         else {
-            p -= attack + decay + sustain;
-            volume = (1-p/release) * sustainVolume;
+            p -= admr.attack + admr.decay + admr.sustain;
+            volume = (1-p/admr.release) * admr.sustainVolume;
         }
 
         let a0 = ((i % waveLength) / waveLength) * Math.PI * 2;

@@ -1,56 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const C = require('construct-js');
+const {writeWav, createSilence, generateAllNotes} = require('./wav');
 
 const sampleRate = 48000; // 96000;
 
-let d = generateSoundData();
-//generateWav(d, 'new24-0.wav');
-
-function generateWav(soundData, filename) {
-    const riffChunkStruct = C.Struct('riffChunk')
-        .field('magic', C.RawString('RIFF'))
-        .field('size', C.U32LE(0))
-        .field('fmtName', C.RawString('WAVE'));
-
-    const fmtSubChunkStruct = C.Struct('fmtSubChunk')
-        .field('id', C.RawString('fmt '))
-        .field('subChunk1Size', C.U32LE(0))
-        .field('audioFormat', C.U16LE(1))
-        .field('numChannels', C.U16LE(1))
-        .field('sampleRate', C.U32LE(sampleRate))
-        .field('byteRate', C.U32LE(sampleRate*2))
-        .field('blockAlign', C.U16LE(2))
-        .field('bitsPerSample', C.U16LE(16));
-
-    const totalSubChuckSize = fmtSubChunkStruct.computeBufferSize();
-    fmtSubChunkStruct.get('subChunk1Size').set(totalSubChuckSize - 8);
-
-    const dataSubChunkStruct = C.Struct('dataSubChunk')
-        .field('id', C.RawString('data'))
-        .field('size', C.U32LE(0))
-        .field('data', C.S16LEs([0]));
-
-
-    //const soundData = generateSoundData();
-    dataSubChunkStruct.get('data').set(soundData);
-    dataSubChunkStruct.get('size').set(soundData.length*2); // 2 bytes per value
-
-    const fileStruct = C.Struct('waveFile')
-        .field('riffChunk', riffChunkStruct)
-        .field('fmtSubChunk', fmtSubChunkStruct)
-        .field('dataSubChunk', dataSubChunkStruct);
-
-    fs.writeFileSync(path.join(__dirname, `/${filename}`), fileStruct.toBuffer());
-}
-
-function combine(a, b) {
-    const ab = [];
-    for (let i = 0; i < a.length; i++) {
-        ab[i] = a[i] + b[i]
-    }
-    return ab;
-}
+generateSoundData();
 
 function addPrimeToBucket(bucket, prime) {
     bucket.primes.push(prime);
@@ -109,46 +61,22 @@ function rebalanceBuckets(buckets) {
     }
 }
 
-function generateAllFreqs() {
-    const ratio = 2**(1/12);
-    const a = [];
-
-    let freq = 55; // A1
-
-    for (let i = 1; i < 8; i++) {
-        a.push(freq);
-        freq *= ratio; // A#
-        freq *= ratio; // B
-        a.push(freq);
-        freq *= ratio; // C
-        a.push(freq);
-        freq *= ratio; // C#
-        freq *= ratio; // D
-        a.push(freq);
-        freq *= ratio; // D#
-        freq *= ratio; // E
-        a.push(freq);
-        freq *= ratio; // F
-        a.push(freq);
-        freq *= ratio; // F#
-        freq *= ratio; // G
-        a.push(freq);
-        freq *= ratio; // G#
-
-        freq *= ratio; // A
-    }
-
-    return a;
-}
-
 function generateSoundData() {
 
     // first generate the notes to be used
-    const freqs = generateAllFreqs();
+    const freqs = generateAllNotes();
 
-    let noteCount = 12;
+    // let noteCount = 12;
+    // let startNote = 16-7;
+    // let notes = [];
+    // for (let i = startNote; i < startNote + noteCount; i++) {
+    //     notes.push({ freq: freqs[i]}); // 1
+    // }
+
+    let noteCount = 12;//7;
+    let startNote = 16;//-2-7;
     let notes = [];
-    for (let i = 16; i < 16 + noteCount; i++) {
+    for (let i = startNote; i < startNote + noteCount; i++) {
         notes.push({ freq: freqs[i]}); // 1
     }
 
@@ -171,7 +99,7 @@ function generateSoundData() {
         attack: 0.05,
         decay: 0.1,
         release: 0.1,
-        attackVolume: 1,
+        attackVolume: 0.9,
         sustainVolume: 0.6
     };
 
@@ -222,7 +150,7 @@ function generateSoundData() {
         // render the audio
 
         // start with silence
-        let intervalData = getSilence({sampleRate, duration});
+        let intervalData = createSilence({sampleRate, duration});
 
         // then see if any of the notes are active
         for (let i = 0; i < buckets.length; i++) {
@@ -271,11 +199,12 @@ function generateSoundData() {
                 }
 
                 let max = 32767;
-                max = max / 4;
+                max = max / 10;
                 const output = data.map(v => {return v * max;});
 
 
-                generateWav(output, `new12-${s}.wav`);
+                writeWav(output, `new12-${s}12.wav`, sampleRate);
+                console.log('output:');
             //}
 
 
@@ -285,14 +214,7 @@ function generateSoundData() {
     }
 }
 
-function getSilence({sampleRate, duration}) {
-    const data = [];
-    let samples = sampleRate * (duration / 1000);
-    for (let i = 0; i < samples; i++) {
-        data[i] = 0;
-    }
-    return data;
-}
+
 
 /*
 
@@ -317,13 +239,38 @@ state: {
  */
 
 function getSoundDataByState({sampleRate, duration, admr, note, prevState, state, nextState}) {
+
+    //duration = duration + Math.floor(Math.random()*0.05*duration);
+
+    let f1 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq, prevState, state, nextState});
+    let f2 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq*2, prevState, state, nextState});
+    let f3 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq*3, prevState, state, nextState});
+    let f4 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq*4, prevState, state, nextState});
+    let f5 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq*5, prevState, state, nextState});
+    let f6 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq*6, prevState, state, nextState});
+    let f7 = getSoundDataByStateAndFreq({sampleRate, duration, admr, freq:note.freq*7, prevState, state, nextState});
+
+    let data = [];
+    for (let i = 0; i < f1.length; i++) {
+
+        data[i] = f1[i]*1.00 + f2[i]*0.77 + f3[i]*0.18 + f4[i]*0.11 + f5[i]*0.05 + f6[i]*0.02;
+        //data[i] = f1[i]*1.00;
+    }
+    return data;
+}
+
+function getSoundDataByStateAndFreq({sampleRate, duration, admr, freq, prevState, state, nextState}) {
     const data = [];
 
     // total number of samples that compose the duration
     let samples = sampleRate * (duration / 1000);
 
     // number of samples per wave length
-    let waveLength = Math.floor(sampleRate / note.freq);
+    let waveLength = Math.floor(sampleRate / freq);
+
+    let volumeAdjust = 0;
+    let volumeMovingUp = false;
+    let volumeChangeChance = 0.2;
 
     // generate each sample
     let a = 0;
@@ -360,17 +307,20 @@ function getSoundDataByState({sampleRate, duration, admr, note, prevState, state
             }
         }
 
-
-
-
         // determine the angle
         a = ((i % waveLength) / waveLength) * Math.PI * 2;
 
         // offset from the prev state
         a += prevState.a;
 
+        // random
+        if (Math.random() < volumeChangeChance) volumeMovingUp = !volumeMovingUp;
+        volumeAdjust = volumeMovingUp ? volumeAdjust + 0.005 : volumeAdjust - 0.005;
+
+        let adjustedVolume = Math.max(volume + volumeAdjust * volume, 0);
+
         // find the height of the wave
-        let v = Math.sin(a) * volume;
+        let v = Math.sin(a) * adjustedVolume;
 
         // add to the data
         data.push(v);
