@@ -52,17 +52,16 @@ chords.forEach(chord => {
 
 function makeWavs2(chord) {
 
-
-    function addToCombined(combined, data, ampMod = 1) {
+    function addToCombined(combined, data) {
         if (combined === null) {
             //combined = data;
-            return data.map((f, i) => f * ampMod);
+            return data.map((f, i) => f);
         }
         else {
-            return combined.map((f, i) => f + data[i] * ampMod);
+            return combined.map((f, i) => f + data[i]);
         }
     }
-
+    
     function createNote(primary, count) {
         let combined = null;
         for (let n = 1; n <= count; n++) {
@@ -70,32 +69,35 @@ function makeWavs2(chord) {
             const freq = primary * n;
             const data = getToneRandom(freq);
 
-            // output
-            const filename = `arcanorum-output/part-${count}-${(n < 10 ? "0" + n.toString() : n)}.wav`;
-            output(data, filename, maxAmp);
-
+            // calc amp
             let p = (1 - (n-1) / (count-1));
             p = p*p*p;
             let ampMod = p * 0.6 + 0.4;
-            combined = addToCombined(combined, data, ampMod);
+            const dataMod = data.map(f => f * ampMod)
+
+            // output
+            const filename = `arcanorum-output/part-${count}-${(n < 10 ? "0" + n.toString() : n)}.wav`;
+            output(dataMod, filename, maxAmp);
+
+            combined = addToCombined(combined, dataMod);
         }
         return combined;
     }
 
-    const freq3 = notes[chord[0]].freq;
-    const freq2 = notes[chord[1]].freq;
-    const freq1 = notes[chord[2]].freq;
+    const freq12 = notes[chord[0]].freq;
+    const freq7 = notes[chord[1]].freq;
+    const freq3 = notes[chord[2]].freq;
 
-    const c1 = createNote(freq1, 3);
-    const c2 = createNote(freq2, 7);
-    const c3 = createNote(freq3, 12);
+    const c3 = createNote(freq3, 3);
+    const c7 = createNote(freq7, 7);
+    const c12 = createNote(freq12, 12);
 
-    output(c1,`arcanorum-output/all1_${chord.join('-')}.wav`, maxAmp)
-    output(c2,`arcanorum-output/all2_${chord.join('-')}.wav`, maxAmp)
     output(c3,`arcanorum-output/all3_${chord.join('-')}.wav`, maxAmp)
+    output(c7,`arcanorum-output/all7_${chord.join('-')}.wav`, maxAmp)
+    output(c12,`arcanorum-output/all12_${chord.join('-')}.wav`, maxAmp)
 
-    const combined = c1.map((f, i) => {
-        return f + c2[i] + c3[i];
+    const combined = c12.map((f, i) => {
+        return f + c3[i] + c7[i];
     });
 
     // now output the combined
