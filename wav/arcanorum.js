@@ -1,3 +1,4 @@
+const {BucketReader} = require('./bucketReader');
 const {writeWav, createSilence, generateAllNotes, getAllNotes, createTone} = require('./wav');
 
 const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199];
@@ -5,137 +6,143 @@ const primes = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 
 const sampleRate = 48000; // 96000;
 
 const notes = getAllNotes();
-const duration = 1000*10*1;
+const duration = 1000*20*1;
 
-const maxAmp = 32767-1000;
+const maxAmp = 32767-3000;
 
 //makeWavs1();
 
+if (module.parent === null) {
+    (async () => {
 
-const chords = [
-    //['A1','C1','E1'], // a minor
-    //['C1','A1','E1'], // a minor
+        let buckets = await loadPrimeBuckets();
+        // ABCDEFG
+        // CEGBDFA
 
-    ['C1','E1','G1'], // a minor
-    //['G1','C1','E1'], // a minor
+        // CEG
+        const chord = ['C1','E1','G1'];
 
-/*    ['C1','E1','G1'], // C major
-    ['D1','F1','A1'], // d minor
-    ['E1','G1','B1'], // e minor
-    ['F1','A1','C1'], // F major
-    ['G1','B1','D1'], // G major
+        // EGB
+        //const chord = ['E1','G1','B1'];
 
-    ['B1','D1','F1'], // b minor diminished*/
+        // GBD
+        //const chord = ['G1','B1','D1'];
 
-    //['A2','C2','E2'], // a minor
-]
+        // BDF
+        //const chord = ['B1','D1','F1'];
 
-// a minor
-// ACE
-// CAE
-// CEA
+        // DFA
+        //const chord = ['D1','F1','A1'];
 
-// c major
-// CEG
-// GCE **
+        // FAC (sounded nice)
+        //const chord = ['F1','A1','C1'];
 
-
-chords.forEach(chord => {
-    makeWavs2([chord[0], chord[1], chord[2]]);
-    //makeWavs2([chord[0], chord[2], chord[1]]);
-    //makeWavs2([chord[1], chord[0], chord[2]]);
-    //makeWavs2([chord[1], chord[2], chord[0]]);
-    //makeWavs2([chord[2], chord[0], chord[1]]);
-    //makeWavs2([chord[2], chord[1], chord[0]]);
-})
+        // ACE
+        //const chord = ['A1','C1','E1'];
 
 
-function makeWavs2(chord) {
+        //const chord = ['A1','C2','E2'];
+        makeWavs2(chord, buckets);
 
-    function addToCombined(combined, data) {
-        if (combined === null) {
-            //combined = data;
-            return data.map((f, i) => f);
-        }
-        else {
-            return combined.map((f, i) => f + data[i]);
-        }
+        //makeWavs22("C1", buckets);
+    })();
+}
+
+
+
+async function loadPrimeBuckets() {
+
+    let buckets = {};
+    let orders = ["03", "07", "12", "22"];
+
+    for (let i = 0; i < orders.length; i++) {
+        let order = orders[i];
+        buckets[order] = await loadBucket(order);
     }
-    
-    function createNote(primary, count) {
-        let combined = null;
-        for (let n = 1; n <= count; n++) {
-            // create tone
-            const freq = primary * n;
-            const data = getToneRandom(freq);
 
-            // calc amp
-            let p = (1 - (n-1) / (count-1));
-            p = p*p*p;
-            let ampMod = p * 0.6 + 0.4;
-            const dataMod = data.map(f => f * ampMod)
+    return buckets;
+}
 
-            // output
-            const filename = `arcanorum-output/part-${count}-${(n < 10 ? "0" + n.toString() : n)}.wav`;
-            output(dataMod, filename, maxAmp);
+async function loadBucket(order) {
+    const reader = new BucketReader(`./${order}.txt`);
 
-            combined = addToCombined(combined, dataMod);
+    let o = [null];
+
+    for (let n = 1; n < 1000000; n++) {
+        let a = [];
+        let line = await reader.getNextLine();
+        for (let i = 0; i < line.length; i++) {
+            a.push(line[i] === "0" ? false : true);
         }
-        return combined;
+        o.push(a);
     }
+
+    return o;
+}
+
+function addToCombined(combined, data) {
+    if (combined === null) {
+        //combined = data;
+        return data.map((f, i) => f);
+    }
+    else {
+        return combined.map((f, i) => f + data[i]);
+    }
+}
+
+function createNote(primary, count, bucket, reverse) {
+    let combined = null;
+    for (let n = 1; n <= count; n++) {
+        // create tone
+        const freq = primary * n;
+        let data = createTone(sampleRate, duration, freq, 1);
+
+        data = applyPrimeAmpMod(data, bucket, n-1, 1, 1, .6, false);
+        //data = applyFog({input:data, maxDelta: 0.9, threshold: 0.3, step: 0.01});
+        data = applyFog({input:data, maxDelta: 0.2, threshold: 0.2, step: 0.01});
+
+        // calc amp
+        let p = (1 - (n-1) / (count-1));
+        p = p*p*p;
+        let ampMod = p * 0.6 + 0.4;
+        const dataMod = data.map(f => f * ampMod)
+
+        // output
+        const filename = `arcanorum-output/part-${count}-${(n < 10 ? "0" + n.toString() : n)}.wav`;
+        output(dataMod, filename, maxAmp);
+
+        combined = addToCombined(combined, dataMod);
+    }
+    return combined;
+}
+
+async function makeWavs2(chord, buckets) {
 
     const freq12 = notes[chord[0]].freq;
     const freq7 = notes[chord[1]].freq;
     const freq3 = notes[chord[2]].freq;
 
-    const c3 = createNote(freq3, 3);
-    const c7 = createNote(freq7, 7);
-    const c12 = createNote(freq12, 12);
+    const c3 = createNote(freq3, 3, buckets["03"], false);
+    const c7 = createNote(freq7, 7, buckets["07"], false);
+    const c12 = createNote(freq12, 12, buckets["12"], false);
 
-    output(c3,`arcanorum-output/all3_${chord.join('-')}.wav`, maxAmp)
-    output(c7,`arcanorum-output/all7_${chord.join('-')}.wav`, maxAmp)
-    output(c12,`arcanorum-output/all12_${chord.join('-')}.wav`, maxAmp)
+    output(c3,`arcanorum-output/${chord.join('-')}_03.wav`, maxAmp)
+    output(c7,`arcanorum-output/${chord.join('-')}_07.wav`, maxAmp)
+    output(c12,`arcanorum-output/${chord.join('-')}_12.wav`, maxAmp)
 
     const combined = c12.map((f, i) => {
         return f + c3[i] + c7[i];
     });
 
     // now output the combined
-    output(combined,`arcanorum-output/all_${chord.join('-')}.wav`, maxAmp)
+    output(combined,`arcanorum-output/${chord.join('-')}_combined.wav`, maxAmp)
 }
 
-function makeWavs1() {
-    let combined = null;
-    const primary = notes['A1'].freq;
-
-    for (let n = 1; n <= 22; n++) {
-
-        // create tone
-
-        const freq = primary * n;
-        //let cyclesPerSecond = 1 / (freq / 55);
-        //const prime = primes[n-1];
-        //const data = getTone(freq, prime);
-        const data = getToneRandom(freq);
-
-        // output
-        const filename = 'arcanorum-output/' + (n < 10 ? "0" + n.toString() : n) + ".wav";
-        output(data, filename, maxAmp);
-
-        // combine
-        if (combined === null) {
-            combined = data;
-        }
-        else {
-            combined = combined.map((f, i) => f + data[i]*((44-n)/44));
-        }
-    }
-
-    // now output the combined
-    output(combined,'arcanorum-output/all.wav', maxAmp)
+async function makeWavs22(noteName, buckets) {
+    const freq = notes[noteName].freq;
+    const data = createNote(freq, 22, buckets["22"], false);
+    output(data,`arcanorum-output/${noteName}_22.wav`, maxAmp)
 }
-
-
 
 
 function output(data, filename, maxAmplitude) {
@@ -148,54 +155,84 @@ function output(data, filename, maxAmplitude) {
     writeWav(dataWithVolume, filename, sampleRate);
 }
 
-function getTone(freq, prime) {
-    let data = createTone(sampleRate, duration, freq, 1);
+function easeInOutSine(x) {
+    return -(Math.cos(Math.PI * x) - 1) / 2;
+}
 
-    const cyclesPerSecond = 3;
+function applyPrimeAmpMod(data, bucket, index, activeFactor, cyclesPerSecond, baseMod = 1, reverse = false) {
+    //const cyclesPerSecond = 3;
     const samplesPerCycle = sampleRate / cyclesPerSecond;
+
+    const attack = 0.4;
+    const release = 0.4;
+    //const activeFactor = 1;
 
     data = data.map((f, i) => {
 
-        let cycle = Math.floor(i/samplesPerCycle) + 1;
+        let n = Math.floor(i/samplesPerCycle) + 2 + 500000;
 
-        if (cycle <= prime) return 0;
+        // determine if active this cycle
+        let isActiveThisCycle = bucket[n][index];
+        // determine attack/release
+        let isActivePrevCycle = bucket[n-1][index];
+        let isActiveNextCycle = bucket[n+1][index];
 
-        // non-active
-        if (cycle % prime !== 0) return f;
+        if (reverse) {
+            isActiveThisCycle = !isActiveThisCycle;
+            isActivePrevCycle = !isActivePrevCycle;
+            isActiveNextCycle = !isActiveNextCycle;
+        }
+
+
+        // mod not active for this note
+        if (!isActiveThisCycle) {
+            // not active, just return the value
+            return f*baseMod;
+        }
+
+
 
         // determine what part of the cycle
         let percent = (i % samplesPerCycle) / samplesPerCycle;
+
+        // default to sustain
         let amplitude = 1;
+
         // attack
-        if (percent < 0.4) {
-            percent = percent / 0.4;
-            amplitude = percent*percent;
+        if (percent < attack) {
+            if (isActivePrevCycle) {
+                amplitude = 1;
+            }
+            else {
+                amplitude = easeInOutSine(percent / attack);
+            }
         }
+
         // release
-        else if (percent > 0.6) {
-            percent = (1-percent) / 0.4;
-            amplitude = percent*percent;
+        else if (percent > (1-release)) {
+            if (isActiveNextCycle) {
+                amplitude = 1;
+            }
+            else {
+                amplitude = (1-percent) / release;
+                amplitude = 1- easeInOutSine(1-amplitude);
+            }
         }
 
-        return f * (1+amplitude*5);
-
-        //let angle = percent * Math.PI; // just half
-        //let amplitude = Math.sin(angle);
-
-        //return f * (1 + amplitude * 10);
+        // apply the amplitude plue factor
+        let mod = amplitude * activeFactor;
+        return f*baseMod + f * mod;
     });
 
     return data;
 }
 
-function getToneRandom(freq) {
-    let data = createTone(sampleRate, duration, freq, 1);
+function applyFog({input, maxDelta = 0.9, threshold = 0.3, step = 0.01}) {
+    //let data = createTone(sampleRate, duration, freq, 1);
 
     let delta = 0;
-    const step = 0.01;
-    const threshold = 0.3;
-    const maxDelta = 0.9;
-    data = data.map(f => {
+
+    const output = input.map(f => {
 
         let r = Math.random();
 
@@ -208,5 +245,7 @@ function getToneRandom(freq) {
         return f * (1+delta);
     });
 
-    return data;
+    return output;
 }
+
+module.exports = {output, addToCombined};
