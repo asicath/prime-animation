@@ -1,0 +1,4 @@
+
+Chart where the first time all notes are played - should be able to predict primes?
+
+Chart where the various buckets take on new numbers, and at what rates, does this tell us anything?

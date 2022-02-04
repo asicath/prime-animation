@@ -1,8 +1,10 @@
 const fs = require('fs');
 const path = require('path');
+const A = require('arcsecond');
+const B = require('arcsecond-binary');
 const C = require('construct-js');
 
-function writeWav(soundData, filename, sampleRate) {
+function getMainHeader(sampleRate) {
     const riffChunkStruct = C.Struct('riffChunk')
         .field('magic', C.RawString('RIFF'))
         .field('size', C.U32LE(0))
@@ -22,21 +24,82 @@ function writeWav(soundData, filename, sampleRate) {
     fmtSubChunkStruct.get('subChunk1Size').set(totalSubChuckSize - 8);
 
     const dataSubChunkStruct = C.Struct('dataSubChunk')
-        .field('id', C.RawString('data'))
-        .field('size', C.U32LE(0))
-        .field('data', C.S16LEs([0]));
+        .field('id', C.RawString('data'));
 
-
-    //const soundData = generateSoundData();
-    dataSubChunkStruct.get('data').set(soundData);
-    dataSubChunkStruct.get('size').set(soundData.length*2); // 2 bytes per value
-
-    const fileStruct = C.Struct('waveFile')
+    const fileStruct = C.Struct('waveFileHeader')
         .field('riffChunk', riffChunkStruct)
         .field('fmtSubChunk', fmtSubChunkStruct)
         .field('dataSubChunk', dataSubChunkStruct);
 
-    fs.writeFileSync(path.join(__dirname, `/${filename}`), fileStruct.toBuffer());
+    return fileStruct.toBuffer();
+}
+
+function getSizeHeader(dataLength, bytesPerValue = 2) {
+    const dataSizeSubChunkStruct = C.Struct('dataSizeSubChunk')
+        .field('size', C.U32LE(0));
+
+    //const soundData = generateSoundData();
+    //dataSubChunkStruct.get('data').set(data);
+    dataSizeSubChunkStruct.get('size').set(dataLength*2); // 2 bytes per value
+
+    const fileStruct = C.Struct('waveFileSize')
+        .field('dataSubChunk', dataSizeSubChunkStruct);
+
+    return fileStruct.toBuffer();
+}
+
+function getWavBuffer(data) {
+    const dataSubChunkStruct = C.Struct('dataSubChunk')
+        .field('data', C.S16LEs([0]));
+
+    dataSubChunkStruct.get('data').set(data);
+
+    const fileStruct = C.Struct('waveFileSize')
+        .field('dataSubChunk', dataSubChunkStruct);
+
+    return fileStruct.toBuffer();
+}
+
+const MAINHEADER_LENGTH = 40;
+
+function addBytesToSizeValue(filename, byteCount) {
+    // first open & read
+    const fd = fs.openSync(filename, "r+");
+    const buf = Buffer.alloc(8);
+    const bytesRead = fs.readSync(fd, buf, 0, 4, MAINHEADER_LENGTH);
+    const currentSize = B.s32LE.run(buf).result;
+
+    // then construct a new header
+    const sizeHeader2 = getSizeHeader(currentSize + byteCount);
+
+    // then write & close
+    const bytesWritten = fs.writeSync(fd, sizeHeader2, 0, sizeHeader2.length, MAINHEADER_LENGTH);
+    fs.closeSync(fd);
+}
+
+function writeWav(soundData, filename, sampleRate) {
+
+    // write the initial
+    const mainHeader = getMainHeader(sampleRate);
+    const sizeHeader = getSizeHeader(soundData.length);
+    const wavBuffer = getWavBuffer(soundData);
+    fs.writeFileSync(path.join(__dirname, `/${filename}`), mainHeader);
+    fs.appendFileSync(path.join(__dirname, `/${filename}`), sizeHeader);
+    fs.appendFileSync(path.join(__dirname, `/${filename}`), wavBuffer);
+
+    /*    // let add another second
+        // put the data on the end
+        fs.appendFileSync(path.join(__dirname, `/${filename}`), wavBuffer);
+        fs.appendFileSync(path.join(__dirname, `/${filename}`), wavBuffer);
+        fs.appendFileSync(path.join(__dirname, `/${filename}`), wavBuffer);
+
+        addBytesToSizeValue(soundData.length*3);*/
+}
+
+function appendWav(soundData, filename, sampleRate) {
+    addBytesToSizeValue(filename, soundData.length);
+    const wavBuffer = getWavBuffer(soundData);
+    fs.appendFileSync(path.join(__dirname, `/${filename}`), wavBuffer);
 }
 
 function createSilence({sampleRate, duration}) {
@@ -120,6 +183,7 @@ function generateAllNotes() {
     return a;
 }
 
+// creates the data for a note at given frequency
 function createTone(sampleRate, duration, freq, amp) {
 
     const data = [];
@@ -138,8 +202,19 @@ function createTone(sampleRate, duration, freq, amp) {
     return data;
 }
 
-exports.writeWav = writeWav;
-exports.createSilence = createSilence;
-exports.createTone = createTone;
-exports.generateAllNotes = generateAllNotes;
-exports.getAllNotes = getAllNotes;
+module.exports = {
+    writeWav,
+    createSilence,
+    createTone,
+    generateAllNotes,
+    getAllNotes,
+    addBytesToSizeValue,
+    appendWav
+};
+
+if (module.parent === null) {
+    const sampleRate = 48000;
+    const maxAmp = 32767-3000;
+    const data = createTone(sampleRate, 1000, 440, maxAmp);
+    writeWav(data, './output/test.wav', sampleRate);
+}
