@@ -1,0 +1,1 @@
+ffmpeg.exe -f image2 -framerate 10 -pattern_type sequence -start_number 0 -r 30 -i ./demo3/%%10d.png -s 1920x1080 -c:v libx264 -preset slow -crf 10 -c:a copy demo3.avi

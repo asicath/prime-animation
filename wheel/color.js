@@ -8,6 +8,11 @@ let Color = function () {
 
     let percentCache = {};
 
+    let ByHue = function (hue, full, alpha = 0.5) {
+        const percent = hue / 255;
+        return ByPercent(percent, full, alpha);
+    }
+
     let ByPercent = function (percent, full, alpha = 0.5) {
 
         // trim it
@@ -82,7 +87,7 @@ let Color = function () {
         return color;
     };
 
-    let ByNumber = function (number, max, alpha) {
+    let ByNumber = function (number, max, alpha, full = 170) {
 
         // special case for 3 colors
         if (max === 3) {
@@ -98,11 +103,12 @@ let Color = function () {
         }
 
         while (number > max) { number -= max; }
-        return ByPercent(number / max, 170, alpha);
+        return ByPercent(number / max, full, alpha);
     };
 
     return {
         ByNumber: ByNumber,
+        ByHue
     };
 
 } ();

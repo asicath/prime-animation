@@ -38,15 +38,27 @@ const FPS30 = 30;
     //     runTimeSeconds: 60*60*4
     // });
 
+    // await execute({
+    //     path: `${rootPath}/demo2`,
+    //     width: 1920*2, height: 1080*2,
+    //
+    //     fps: 60,
+    //     startTime: 1000*60*60*2,
+    //
+    //     // only one frame
+    //     //isSingleFrame: true,
+    //     runTimeSeconds: 60*5
+    // });
+
     await execute({
-        path: `${rootPath}/demo2`,
+        path: `${rootPath}/demo3`,
         width: 1920*2, height: 1080*2,
 
         fps: 60,
         startTime: 1000*60*60*2,
 
         // only one frame
-        //isSingleFrame: true,
+        isSingleFrame: true,
         runTimeSeconds: 60*5
     });
 
