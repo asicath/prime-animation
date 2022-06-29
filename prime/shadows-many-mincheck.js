@@ -39,7 +39,7 @@ function createPattern(primes) {
     return pattern;
 }
 
-function isPrime(n) {
+export function isPrime(n) {
     const max = Math.floor(Math.sqrt(n));
 
     for (let i = 0; i < knownPrimes.length; i++) {
@@ -72,32 +72,33 @@ function isPrime(n) {
     return true;
 }
 
-const start = Date.now();
-const findPrimesUnder = 100000000;
+if (module.parent === null) {
+    const start = Date.now();
+    const findPrimesUnder = 100000000;
 
-let count = knownPrimes.length;
-let totalChecked = 0;
-let i = 0;
-let n = 1 + pattern[i];
-while (n < findPrimesUnder) {
-    if (isPrime(n)) {
-        count++;
+    let count = knownPrimes.length;
+    let totalChecked = 0;
+    let i = 0;
+    let n = 1 + pattern[i];
+    while (n < findPrimesUnder) {
+        if (isPrime(n)) {
+            count++;
+        }
+        totalChecked++;
+
+        // move to the next
+        i++;
+        if (i === pattern.length) i = 0;
+
+        // advance, all primes must fall in the shadows of the known primes used to generate the
+        n += pattern[i];
     }
-    totalChecked++;
 
-    // move to the next
-    i++;
-    if (i === pattern.length) i = 0;
+    const duration = Date.now() - start;
+    const each = duration / findPrimesUnder;
+    const rate = Math.floor(findPrimesUnder / duration);
 
-    // advance, all primes must fall in the shadows of the known primes used to generate the
-    n += pattern[i];
-}
-
-const duration = Date.now() - start;
-const each = duration / findPrimesUnder;
-const rate = Math.floor(findPrimesUnder / duration);
-
-console.log(`${count} primes found in ${duration}ms ${rate}primes/ms --- checked ${totalChecked} / ${totalChecked/findPrimesUnder}%, prime: ${count / totalChecked}%`);
+    console.log(`${count} primes found in ${duration}ms ${rate}primes/ms --- checked ${totalChecked} / ${totalChecked/findPrimesUnder}%, prime: ${count / totalChecked}%`);
 
 // 664579 primes found in 871ms 11481primes/ms
 // 664579 primes found in 870ms 11494primes/ms
@@ -105,3 +106,4 @@ console.log(`${count} primes found in ${duration}ms ${rate}primes/ms --- checked
 
 // 5761455 primes found in 22579ms 4428primes/ms
 // 5761455 primes found in 22530ms 4438primes/ms
+}

@@ -8,6 +8,10 @@ for (let i = 1; i <= 5; i++) {
     })
 }
 
+function lookupNotes(a) {
+
+}
+
 // youtube recording
 // const config = {
 //     noteStart: 7, // 19 was original
@@ -17,7 +21,7 @@ for (let i = 1; i <= 5; i++) {
 // };
 
 //const numberStart = 1000000;
-const numberStart = 10;
+const numberStart = 200000;
 
 // hopeful
 const themeHopeful = {
@@ -44,10 +48,24 @@ const themeGoth = {
     bpmIncreaseFn: 'ln'
 };
 
+const themePenta = {
+    name: 'penta',
+
+    activeNotes: ['D3', 'E3', 'G3', 'A4', 'C4', 'D4'],
+    //activeNotes: ['C3', 'D3', 'E3', 'G3', 'A3'],
+    //noteStart: 14,
+    //noteCount: 5,
+
+    bpmStart: 250,
+    bpmTarget: 300,
+    bpmTargetAt: 1000000,
+    bpmIncreaseFn: 'ln'
+};
+
 const config = themeHopeful;
 
 //const activeNotes = allNotes.splice(19,7);
-const activeNotes = allNotes.splice(config.noteStart, config.noteCount);
+const activeNotes = config.activeNotes || allNotes.splice(config.noteStart, config.noteCount);
 
 const notes = activeNotes.map(name => {
     return { name, isActive: false, isPlaying: false, factor: 0 }
